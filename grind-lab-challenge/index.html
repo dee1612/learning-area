@@ -104,7 +104,7 @@
     .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
     .card-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.04em}
     .card-icon{font-size:22px;transform:scale(0);transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
-    .meal-card.yes .card-icon,.meal-card.no .card-icon{transform:scale(1)}
+    .meal-card.yes .card-icon{transform:scale(1)}
     .card-q{font-size:13px;color:var(--text-secondary);margin-bottom:16px}
     .meal-card.yes .card-q,.meal-card.no .card-q{margin-bottom:4px}
     .card-btns{display:flex;flex-direction:column;gap:10px}
@@ -605,7 +605,7 @@ function renderToday(){
     const card = document.createElement('div');
     card.className = 'meal-card' + (ans===true?' yes':ans===false?' no':'');
     card.id = 'card-' + m;
-    const icon = ans===true ? '\u2713' : ans===false ? '\u2715' : '';
+    const icon = ans===true ? '\u2713' : '';
     const status = ans===true ? 'You hit it! \uD83D\uDCAA' : ans===false ? 'Not this time.' : '';
     card.innerHTML =
       '<div class="card-header"><div class="card-name">' + LABELS[m] + '</div><div class="card-icon">' + icon + '</div></div>' +
@@ -714,7 +714,7 @@ function handleMeal(meal, answer, ev){
     const q = card.querySelector('.card-q');
     if(q) q.style.marginBottom = '4px';
     const icon = card.querySelector('.card-icon');
-    if(icon) icon.textContent = answer ? '\u2713' : '\u2715';
+    if(icon) icon.textContent = answer ? '\u2713' : '';
     const stat = card.querySelector('.card-status');
     if(stat) stat.textContent = answer ? 'You hit it! \uD83D\uDCAA' : 'Not this time.';
   }
