@@ -415,7 +415,10 @@ function saveUser(){
 function getDayData(date){
   const t = date || viewingDate || today();
   let d = user.days.find(x => x.date === t);
-  if(!d){ d = { date:t, breakfast:null, lunch:null, dinner:null, points:0 }; user.days.push(d); }
+  if(!d){
+    d = { date:t, breakfast:null, lunch:null, dinner:null, points:0 };
+    if(t >= '2025-01-01') user.days.push(d); // don't persist fake test dates
+  }
   return d;
 }
 
@@ -886,6 +889,15 @@ function renderMe(){
 }
 
 // === INIT ===
+function cleanFakeDates(){
+  // Remove any fake test dates (pre-2025) that got saved to user.days
+  if(user && user.days){
+    const before = user.days.length;
+    user.days = user.days.filter(d => d.date >= '2025-01-01');
+    if(user.days.length !== before) saveUser();
+  }
+}
+
 function checkStreakReset(){
   if(!user.lastCheckIn || user.lastCheckIn===today()) return;
   if(user.lastCheckIn !== yesterday() && !hadYesYesterday()){
@@ -926,7 +938,7 @@ function init(){
   if(email){
     const users = getUsers();
     const u = users[email];
-    if(u){ user=u; checkStreakReset(); enterApp(); return; }
+    if(u){ user=u; cleanFakeDates(); checkStreakReset(); enterApp(); return; }
   }
   const ob = document.getElementById('screen-onboarding');
   ob.classList.add('active');
