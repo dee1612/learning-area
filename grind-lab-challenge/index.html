@@ -629,10 +629,6 @@ function resetMeal(meal){
   const day = getDayData();
   const prev = day[meal];
   if(prev === null) return;
-  if(prev === true){
-    day.points = Math.max(0, (day.points||0) - 10);
-    user.points = Math.max(0, user.points - 10);
-  }
   day[meal] = null;
   const t = today();
   const i = user.days.findIndex(x => x.date === t);
