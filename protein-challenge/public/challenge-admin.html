@@ -60,10 +60,6 @@ tr:hover td{background:#1c1c1c}
     <div id="participants-table"><div class="loading">Loading...</div></div>
   </div>
 
-  <div class="section">
-    <div class="section-title">Coaching Interest 🙋 <span class="badge" id="c-count">0</span></div>
-    <div id="coaching-table"><div class="loading">Loading...</div></div>
-  </div>
 </div>
 
 <script>
@@ -94,19 +90,17 @@ function fmt(iso){
 async function showDashboard(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('dashboard').style.display='block';
-  await Promise.all([loadParticipants(), loadCoaching(), loadStats()]);
+  await Promise.all([loadParticipants(), loadStats()]);
 }
 
 async function loadStats(){
-  const [{ count: pCount }, { count: cCount }, { data: lbData }] = await Promise.all([
+  const [{ count: pCount }, { data: lbData }] = await Promise.all([
     sb.from('glc_participants').select('*', { count:'exact', head:true }),
-    sb.from('glc_coaching_interest').select('*', { count:'exact', head:true }),
     sb.from('glc_leaderboard').select('points').order('points',{ascending:false}).limit(1)
   ]);
   const topScore = lbData && lbData[0] ? lbData[0].points : 0;
   document.getElementById('stats').innerHTML =
     '<div class="stat"><div class="stat-val">'+(pCount||0)+'</div><div class="stat-lbl">Participants</div></div>' +
-    '<div class="stat"><div class="stat-val">'+(cCount||0)+'</div><div class="stat-lbl">Want Coaching</div></div>' +
     '<div class="stat"><div class="stat-val">'+topScore+'</div><div class="stat-lbl">Top Score</div></div>';
 }
 
@@ -130,7 +124,7 @@ async function loadParticipants(){
       '<td class="email">'+p.email+'</td>' +
       '<td class="time">'+fmt(p.joined_at)+'</td>' +
       '<td class="time">'+fmt(p.last_active)+'</td>' +
-      '<td class="pts">'+pts+(streak>0?' 🔥'+streak:'')+'</td>' +
+      '<td class="pts">'+pts+(streak>0?'<br><span style="font-size:12px;color:var(--muted)">🔥 '+streak+' streak</span>':'')+'</td>' +
       '<td><button class="del-btn" onclick="deleteUser(\''+p.email+'\',this)">Delete</button></td>';
     body.appendChild(tr);
   });
