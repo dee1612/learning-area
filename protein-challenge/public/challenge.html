@@ -693,17 +693,19 @@ function paintLB(lb){
       '<div class="p-block"><div class="p-medal">'+MEDALS[pi]+'</div></div>';
     pod.appendChild(slot);
   });
-  lb.slice(3).forEach((u2, i) => {
+  // Full ranked list below podium (all positions)
+  lb.forEach((u2, i) => {
     const isMe = u2.email === user.email;
     const row = document.createElement('div');
     row.className = 'lb-row'+(isMe?' me':'');
-    row.innerHTML = '<div class="lb-rank">'+(i+4)+'</div><div class="lb-nick">'+u2.nickname+(isMe?' \uD83D\uDC48':'')+'</div><div class="lb-pts">'+u2.points+'</div><div class="lb-str">'+(u2.streak>0?'\uD83D\uDD25'+u2.streak:'')+'</div>';
+    row.innerHTML = '<div class="lb-rank">'+(i+1)+'</div><div class="lb-nick">'+u2.nickname+(isMe?' \uD83D\uDC48':'')+'</div><div class="lb-pts">'+u2.points+'</div><div class="lb-str">'+(u2.streak>0?'\uD83D\uDD25'+u2.streak:'')+'</div>';
     list.appendChild(row);
   });
-  const me = lb.find(u2 => u2.email === user.email);
-  if(me){
-    const rank = lb.indexOf(me)+1;
-    pinned.innerHTML = '<div class="lb-row me"><div class="lb-rank">'+rank+'</div><div class="lb-nick">'+me.nickname+' (you)</div><div class="lb-pts">'+me.points+'</div><div class="lb-str">'+(me.streak>0?'\uD83D\uDD25'+me.streak:'')+'</div></div>';
+  // Pinned self only if outside top 3
+  const myRank = lb.findIndex(u2 => u2.email === user.email);
+  if(myRank >= 3){
+    const me = lb[myRank];
+    pinned.innerHTML = '<div class="lb-row me"><div class="lb-rank">'+(myRank+1)+'</div><div class="lb-nick">'+me.nickname+' (you)</div><div class="lb-pts">'+me.points+'</div><div class="lb-str">'+(me.streak>0?'\uD83D\uDD25'+me.streak:'')+'</div></div>';
   }
 }
 
