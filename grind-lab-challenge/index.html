@@ -738,7 +738,7 @@ function handleMeal(meal, answer, ev){
   // Save days
   const t = viewingDate || today();
   const i = user.days.findIndex(x => x.date === t);
-  if(i >= 0) user.days[i] = day; else user.days.push(day);
+  if(i >= 0) user.days[i] = day; else if(t >= '2025-01-01') user.days.push(day);
   saveUser();
 
   // Animate card
