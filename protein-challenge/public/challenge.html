@@ -114,6 +114,11 @@
     .meal-card.no .card-status{display:block;color:#444}
     .card-undo{display:none;font-size:11px;color:var(--text-secondary);margin-top:8px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
     .meal-card.yes .card-undo,.meal-card.no .card-undo{display:block}
+    .day-nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+    .day-nav-row .day-counter{margin-bottom:0;flex:1;text-align:center}
+    .day-nav-btn{background:none;border:none;color:var(--text-secondary);font-size:20px;padding:6px 12px;cursor:pointer;opacity:.5;transition:opacity .2s;line-height:1}
+    .day-nav-btn:disabled{opacity:.12;cursor:not-allowed}
+    .day-nav-btn:not(:disabled):active{opacity:1}
     .day-counter{font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:.1em;text-transform:uppercase;margin-bottom:20px}
     .btn-yes{
       display:block;width:100%;padding:15px;
@@ -225,57 +230,26 @@
     .pd-sub{font-size:16px;color:var(--gold);margin-top:14px;font-weight:700;letter-spacing:.12em}
     #confetti-canvas{position:fixed;inset:0;z-index:9001;pointer-events:none}
 
-    /* PITCH DRAWER */
-    #pitch-drawer{
-      position:fixed;left:0;right:0;bottom:72px;z-index:400;
-      transform:translateY(calc(100% - 48px));
-      transition:transform .4s cubic-bezier(.4,0,.2,1);
-    }
-    #pitch-drawer.open{ transform:translateY(0); }
-    .pitch-tab{
-      background:var(--accent);padding:12px 24px;
-      display:flex;align-items:center;justify-content:space-between;
-      cursor:pointer;border-radius:16px 16px 0 0;
-      font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.06em;color:#fff;
-    }
-    .pitch-tab-arrow{font-size:16px;transition:transform .3s}
-    #pitch-drawer.open .pitch-tab-arrow{transform:rotate(180deg)}
-    .pitch-drawer-body{
-      background:#1a0800;border:1px solid rgba(255,107,53,.25);
-      border-bottom:none;padding:20px 24px 24px;
-    }
-    .pitch-drawer-body .pitch-title{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);margin-bottom:6px}
-    .pitch-drawer-body .pitch-body{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px}
-
     /* UTIL */
     .gap8{height:8px}.gap16{height:16px}.gap24{height:24px}
-
-    /* COACHING PITCH BANNER */
-    .pitch-banner{
-      background:linear-gradient(135deg,#1a0a00,#2a1200);
-      border:1px solid rgba(255,107,53,.3);border-radius:16px;
-      padding:20px;margin-bottom:20px;text-align:center;
-    }
-    .pitch-title{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);margin-bottom:6px}
-    .pitch-body{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px}
-    .pitch-cta{
-      display:inline-block;padding:12px 28px;
-      background:var(--accent);color:#fff;
-      font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.08em;
-      border-radius:50px;text-decoration:none;
-      box-shadow:0 4px 18px rgba(255,107,53,.3);
-    }
-    .pitch-dismiss{font-size:11px;color:var(--text-secondary);margin-top:12px;cursor:pointer;text-decoration:underline}
 
     /* DAY 7 WINNER OVERLAY */
     #winner-overlay{
       position:fixed;inset:0;z-index:8000;
-      background:#0a0500;
+      background:rgba(8,3,0,.97);
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       padding:32px;text-align:center;
-      opacity:0;pointer-events:none;transition:opacity .4s ease;overflow-y:auto;
+      opacity:0;pointer-events:none;
+      transition:opacity .6s ease;
+      overflow-y:auto;
     }
     #winner-overlay.show{opacity:1;pointer-events:all}
+    #winner-overlay.show .win-crown{animation:crown-drop .7s cubic-bezier(.34,1.56,.64,1) .2s both}
+    #winner-overlay.show .win-title{animation:fade-up .5s ease .4s both}
+    #winner-overlay.show .win-sub{animation:fade-up .5s ease .55s both}
+    #winner-overlay.show .win-lb{animation:fade-up .5s ease .65s both}
+    @keyframes crown-drop{0%{transform:translateY(-40px) scale(.6);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+    @keyframes fade-up{0%{transform:translateY(16px);opacity:0}100%{transform:translateY(0);opacity:1}}
     .win-crown{font-size:72px;margin-bottom:8px}
     .win-title{font-family:'Bebas Neue',sans-serif;font-size:56px;color:var(--gold);line-height:1;margin-bottom:8px}
     .win-sub{font-size:15px;color:var(--text-secondary);margin-bottom:32px;line-height:1.5}
@@ -288,19 +262,6 @@
     .win-pts{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gold)}
     .win-dismiss{font-size:13px;color:var(--text-secondary);cursor:pointer;text-decoration:underline;margin-top:8px}
 
-    /* COMPLETION OVERLAY (Day 11+) */
-    #done-overlay{
-      position:fixed;inset:0;z-index:8500;
-      background:#050a05;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      padding:32px;text-align:center;
-      opacity:0;pointer-events:none;transition:opacity .4s ease;overflow-y:auto;
-    }
-    #done-overlay.show{opacity:1;pointer-events:all}
-    .done-emoji{font-size:72px;margin-bottom:12px}
-    .done-title{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--accent);line-height:1;margin-bottom:8px}
-    .done-sub{font-size:15px;color:var(--text-secondary);line-height:1.6;margin-bottom:32px}
-    .done-dismiss{font-size:12px;color:var(--text-secondary);cursor:pointer;text-decoration:underline;margin-top:16px}
   </style>
 </head>
 <body>
@@ -331,11 +292,14 @@
   <div id="screen-today" class="screen">
     <div class="today-top">
       <div class="greeting" id="greeting">Hey there &#128075;</div>
-      <div class="day-counter" id="day-counter"></div>
+      <div class="day-nav-row">
+        <button class="day-nav-btn" id="btn-day-prev" onclick="navDay(-1)" disabled>&#8592;</button>
+        <div class="day-counter" id="day-counter"></div>
+        <button class="day-nav-btn" id="btn-day-next" onclick="navDay(1)" disabled>&#8594;</button>
+      </div>
       <div id="streak-area"></div>
     </div>
     <div class="meals" id="meals"></div>
-    <div id="pitch-area"></div>
     <div class="pts-total" id="pts-total"></div>
   </div>
 
@@ -362,42 +326,15 @@
 
 </div><!-- /app -->
 
-<!-- PITCH DRAWER -->
-<div id="pitch-drawer">
-  <div class="pitch-tab" onclick="togglePitchDrawer()">
-    <span>APPLY FOR 1:1 COACHING</span>
-    <span class="pitch-tab-arrow">▲</span>
-  </div>
-  <div class="pitch-drawer-body">
-    <div class="pitch-title">Want 1:1 coaching? 💪</div>
-    <div class="pitch-body">Personalised nutrition &amp; fitness coaching with Dee, built around your life — not a generic plan.</div>
-    <button class="btn-cta" style="margin-bottom:10px" onclick="submitPitchInterest()">YES, REACH OUT TO ME</button>
-    <button class="btn-ghost" onclick="collapsePitchDrawer()">No thanks</button>
-  </div>
-</div>
-
 <!-- DAY 7 WINNER OVERLAY -->
 <div id="winner-overlay">
   <div class="win-crown">&#127942;</div>
   <div class="win-title">DAY 7<br>WINNERS</div>
-  <div class="win-sub">Look how far you've all come. 🔥<br>The challenge doesn't stop here.</div>
+  <div class="win-sub">Look how far you've all come. 🔥<br>7 days of showing up. That's everything.</div>
   <div class="win-lb" id="win-lb"></div>
-  <button class="btn-cta" onclick="dismissWinner()">KEEP GOING &rarr;</button>
   <div class="win-dismiss" onclick="dismissWinner()">close</div>
 </div>
 
-<!-- DONE OVERLAY (Day 11+) -->
-<div id="done-overlay">
-  <div class="done-emoji">&#127881;</div>
-  <div class="done-title">YOU DID IT.</div>
-  <div class="done-sub">10 days of showing up for yourself.<br>That's not a challenge — that's a lifestyle.</div>
-  <div class="pitch-banner" style="margin-bottom:0">
-    <div class="pitch-title">Ready to go further?</div>
-    <div class="pitch-body">Work 1:1 with Dee for personalised nutrition coaching built around your life — not a generic plan.</div>
-    <a href="https://form.jotform.com/243235558047055" class="pitch-cta">BOOK A FREE CALL</a>
-  </div>
-  <div class="done-dismiss" onclick="document.getElementById('done-overlay').classList.remove('show')">I'll think about it</div>
-</div>
 
 <!-- BOTTOM NAV -->
 <nav id="bottom-nav">
@@ -434,6 +371,7 @@ const CUR_KEY = 'glc_cur_v2';
 const TABS = ['today','leaderboard','me'];
 let CUR_TAB = 0;
 let user = null;
+let viewingDate = null; // null = today
 
 // === SUPABASE ===
 const SB_URL = 'https://bqqoczbminqhknwbhslh.supabase.co';
@@ -473,8 +411,8 @@ function saveUser(){
   syncLB();
 }
 
-function getDayData(){
-  const t = today();
+function getDayData(date){
+  const t = date || viewingDate || today();
   let d = user.days.find(x => x.date === t);
   if(!d){ d = { date:t, breakfast:null, lunch:null, dinner:null, points:0 }; user.days.push(d); }
   return d;
@@ -556,7 +494,22 @@ function doSignup(){
 }
 
 // === NAVIGATION ===
+function navDay(dir){
+  const todayStr = today();
+  const cur = viewingDate || todayStr;
+  const d = new Date(cur);
+  d.setDate(d.getDate() + dir);
+  const next = d.toISOString().split('T')[0];
+  // Clamp: don't go before day 1, don't go past today
+  const sorted = [...user.days].sort((a,b)=>a.date.localeCompare(b.date));
+  const startDate = sorted.length > 0 ? sorted[0].date : todayStr;
+  if(next < startDate || next > todayStr) return;
+  viewingDate = next;
+  renderToday();
+}
+
 function enterApp(){
+  viewingDate = today();
   // Update last_active on every login
   sb.from('glc_participants').upsert(
     { email:user.email, nickname:user.nickname, last_active:new Date().toISOString() },
@@ -618,47 +571,35 @@ function goTab(tab, idx){
 function renderToday(){
   const users = getUsers();
   user = users[user.email] || user;
+  if(!viewingDate) viewingDate = today();
   document.getElementById('greeting').textContent = 'Hey ' + user.nickname + ' \uD83D\uDC4B';
 
-  // Day counter
-  const dayNum = getDayNum();
-  const maxDays = dayNum <= 7 ? 7 : 10;
-  const dcEl = document.getElementById('day-counter');
-  if(dcEl) dcEl.textContent = 'DAY ' + Math.min(dayNum, 10) + ' OF ' + maxDays;
+  // Day counter + nav buttons
+  const actualDayNum = getDayNum();
+  const todayStr = today();
+  const isViewingToday = viewingDate === todayStr;
 
-  // Day 7 winner announcement (once per session)
-  if(dayNum === 7 && !sessionStorage.getItem('winner_shown')){
+  // Calculate viewed day number from start
+  const sorted = [...user.days].sort((a,b)=>a.date.localeCompare(b.date));
+  const startDate = sorted.length > 0 ? sorted[0].date : todayStr;
+  const viewedDayNum = Math.floor((new Date(viewingDate) - new Date(startDate)) / 86400000) + 1;
+  const dcEl = document.getElementById('day-counter');
+  if(isViewingToday){
+    if(dcEl) dcEl.textContent = 'DAY ' + Math.min(actualDayNum, 7) + ' OF 7';
+  } else {
+    if(dcEl) dcEl.textContent = 'DAY ' + Math.max(1, viewedDayNum) + ' \u2022 PAST';
+  }
+
+  // Prev/next nav buttons
+  const btnPrev = document.getElementById('btn-day-prev');
+  const btnNext = document.getElementById('btn-day-next');
+  if(btnPrev) btnPrev.disabled = viewingDate <= startDate;
+  if(btnNext) btnNext.disabled = isViewingToday;
+
+  // Day 7 winner announcement (once per session) — only when on today
+  if(isViewingToday && actualDayNum === 7 && !sessionStorage.getItem('winner_shown')){
     sessionStorage.setItem('winner_shown','1');
     setTimeout(showWinnerOverlay, 800);
-  }
-
-  // Day 11+ completion screen
-  if(dayNum > 9){
-    setTimeout(() => document.getElementById('done-overlay').classList.add('show'), 600);
-  }
-
-  // Coaching pitch drawer (Day 5+)
-  const isTestMode = !!new URLSearchParams(window.location.search).get('day');
-  const pitchState = isTestMode ? null : localStorage.getItem('pitch_state');
-  const drawer = document.getElementById('pitch-drawer');
-  const pitchArea = document.getElementById('pitch-area');
-  if(dayNum >= 5){
-    if(pitchState === 'done'){
-      // Already said YES — show thank you inline, hide drawer
-      if(drawer) drawer.style.display = 'none';
-      if(pitchArea) pitchArea.innerHTML = '<div class="pitch-banner" style="margin-bottom:16px"><div class="pitch-title">You\'re on the list! 🙌</div><div class="pitch-body">Dee will reach out to you at <strong style="color:var(--accent)">' + user.email + '</strong> soon.</div></div>';
-    } else {
-      // Show drawer
-      if(pitchArea) pitchArea.innerHTML = '';
-      if(drawer){
-        drawer.style.display = 'block';
-        if(pitchState === 'collapsed') drawer.classList.remove('open');
-        else drawer.classList.add('open');
-      }
-    }
-  } else {
-    if(drawer) drawer.style.display = 'none';
-    if(pitchArea) pitchArea.innerHTML = '';
   }
 
   // streak
@@ -669,7 +610,7 @@ function renderToday(){
     sa.innerHTML = '<div class="streak-zero">Start your streak today \uD83D\uDCAA</div>';
   }
 
-  const day = getDayData();
+  const day = getDayData(viewingDate);
   const MEALS = ['breakfast','lunch','dinner'];
   const LABELS = {breakfast:'BREAKFAST', lunch:'LUNCH', dinner:'DINNER'};
   const container = document.getElementById('meals');
@@ -701,11 +642,11 @@ function updatePtsDisplay(){
 
 // === RESET MEAL (unselect) ===
 function resetMeal(meal){
-  const day = getDayData();
+  const day = getDayData(viewingDate || today());
   const prev = day[meal];
   if(prev === null) return;
   day[meal] = null;
-  const t = today();
+  const t = viewingDate || today();
   const i = user.days.findIndex(x => x.date === t);
   if(i >= 0) user.days[i] = day;
   saveUser();
@@ -777,7 +718,7 @@ function handleMeal(meal, answer, ev){
   }
 
   // Save days
-  const t = today();
+  const t = viewingDate || today();
   const i = user.days.findIndex(x => x.date === t);
   if(i >= 0) user.days[i] = day; else user.days.push(day);
   saveUser();
@@ -796,7 +737,7 @@ function handleMeal(meal, answer, ev){
 
   setTimeout(() => {
     updatePtsDisplay();
-    const d = getDayData();
+    const d = getDayData(viewingDate || today());
     if(d.breakfast===true && d.lunch===true && d.dinner===true) triggerPerfectDay();
   }, 350);
 }
@@ -944,7 +885,7 @@ async function showWinnerOverlay(){
       const row = document.createElement('div');
       row.className = 'win-row' + (isFirst?' first':'');
       const medals = ['\uD83E\uDD47','\uD83E\uDD48','\uD83E\uDD49'];
-      row.innerHTML = '<div class="win-rank">'+(medals[i]||i+1)+'</div><div class="win-nick">'+u2.nickname+'</div><div class="win-pts">'+u2.points+'</div>';
+      row.innerHTML = '<div class="win-rank">'+(medals[i]||i+1)+'</div><div class="win-nick">'+u2.nickname+'</div><div style="text-align:right"><div class="win-pts">'+u2.points+' pts</div>'+(u2.streak>0?'<div style="font-size:11px;color:var(--text-secondary)">\uD83D\uDD25 '+u2.streak+' streak</div>':'')+'</div>';
       lbEl.appendChild(row);
     });
   }catch(e){}
@@ -957,31 +898,6 @@ function dismissWinner(){
   stopConfetti();
 }
 
-function collapsePitchDrawer(){
-  localStorage.setItem('pitch_state','collapsed');
-  document.getElementById('pitch-drawer').classList.remove('open');
-}
-
-function togglePitchDrawer(){
-  const drawer = document.getElementById('pitch-drawer');
-  const isOpen = drawer.classList.contains('open');
-  if(isOpen){ collapsePitchDrawer(); }
-  else { drawer.classList.add('open'); localStorage.setItem('pitch_state', null); }
-}
-
-async function submitPitchInterest(){
-  localStorage.setItem('pitch_state','done');
-  const drawer = document.getElementById('pitch-drawer');
-  if(drawer) drawer.style.display = 'none';
-  const pitchArea = document.getElementById('pitch-area');
-  if(pitchArea) pitchArea.innerHTML = '<div class="pitch-banner" style="margin-bottom:16px"><div class="pitch-title">You\'re on the list! 🙌</div><div class="pitch-body">Dee will reach out to you at <strong style="color:var(--accent)">' + user.email + '</strong> soon.</div></div>';
-  try{
-    await sb.from('glc_coaching_interest').upsert(
-      { email: user.email, nickname: user.nickname, interested_at: new Date().toISOString() },
-      { onConflict:'email' }
-    );
-  }catch(e){}
-}
 
 // === INIT ===
 function init(){
