@@ -230,52 +230,8 @@
     .pd-sub{font-size:16px;color:var(--gold);margin-top:14px;font-weight:700;letter-spacing:.12em}
     #confetti-canvas{position:fixed;inset:0;z-index:9001;pointer-events:none}
 
-    /* PITCH DRAWER */
-    #pitch-drawer{
-      position:fixed;left:0;right:0;bottom:72px;z-index:400;
-      transform:translateY(100%);
-      transition:transform .5s cubic-bezier(.4,0,.2,1);
-      display:none;
-    }
-    #pitch-drawer.open{ transform:translateY(0); }
-    #pitch-drawer.collapsed{ transform:translateY(calc(100% - 32px)); }
-    .pitch-tab{
-      background:rgba(20,8,0,.95);
-      border-top:1px solid rgba(255,107,53,.25);
-      padding:7px 20px;
-      display:flex;align-items:center;justify-content:space-between;
-      cursor:pointer;
-      font-size:11px;font-weight:600;letter-spacing:.08em;
-      color:rgba(255,107,53,.7);text-transform:uppercase;
-    }
-    .pitch-tab-arrow{font-size:10px;transition:transform .3s;opacity:.6}
-    #pitch-drawer.open .pitch-tab-arrow{transform:rotate(180deg)}
-    .pitch-drawer-body{
-      background:#140800;border-top:1px solid rgba(255,107,53,.15);
-      padding:20px 24px 24px;
-    }
-    .pitch-drawer-body .pitch-title{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);margin-bottom:6px}
-    .pitch-drawer-body .pitch-body{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px}
-
     /* UTIL */
     .gap8{height:8px}.gap16{height:16px}.gap24{height:24px}
-
-    /* COACHING PITCH BANNER */
-    .pitch-banner{
-      background:linear-gradient(135deg,#1a0a00,#2a1200);
-      border:1px solid rgba(255,107,53,.3);border-radius:16px;
-      padding:20px;margin-bottom:20px;text-align:center;
-    }
-    .pitch-title{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);margin-bottom:6px}
-    .pitch-body{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px}
-    .pitch-cta{
-      display:inline-block;padding:12px 28px;
-      background:var(--accent);color:#fff;
-      font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.08em;
-      border-radius:50px;text-decoration:none;
-      box-shadow:0 4px 18px rgba(255,107,53,.3);
-    }
-    .pitch-dismiss{font-size:11px;color:var(--text-secondary);margin-top:12px;cursor:pointer;text-decoration:underline}
 
     /* DAY 7 WINNER OVERLAY */
     #winner-overlay{
@@ -336,7 +292,6 @@
       <div id="streak-area"></div>
     </div>
     <div class="meals" id="meals"></div>
-    <div id="pitch-area"></div>
     <div class="pts-total" id="pts-total"></div>
   </div>
 
@@ -363,26 +318,13 @@
 
 </div><!-- /app -->
 
-<!-- PITCH DRAWER -->
-<div id="pitch-drawer">
-  <div class="pitch-tab" onclick="togglePitchDrawer()">
-    <span>1:1 COACHING WITH DEE</span>
-    <span class="pitch-tab-arrow">▲</span>
-  </div>
-  <div class="pitch-drawer-body">
-    <div class="pitch-title">Want to do 1:1 coaching?</div>
-    <div class="pitch-body">This challenge is a great start — but real results happen when everything is built around YOU. Tap below to even just have a conversation about what it looks like.</div>
-    <button class="btn-cta" style="margin-bottom:10px" onclick="submitPitchInterest()">YES, LET'S CHAT</button>
-    <button class="btn-ghost" onclick="collapsePitchDrawer()">Not right now</button>
-  </div>
-</div>
-
 <!-- DAY 7 WINNER OVERLAY -->
 <div id="winner-overlay">
   <div class="win-crown">&#127942;</div>
   <div class="win-title">DAY 7<br>WINNERS</div>
   <div class="win-sub">Look how far you've all come. 🔥<br>The challenge doesn't stop here.</div>
   <div class="win-lb" id="win-lb"></div>
+  <div style="font-size:12px;color:rgba(255,255,255,.3);margin-top:20px;line-height:1.6">Want to go further? DM Dee about 1:1 coaching.</div>
   <div class="win-dismiss" onclick="dismissWinner()">close</div>
 </div>
 
@@ -583,9 +525,6 @@ function enterApp(){
 
 function goTab(tab, idx){
   if(TABS[CUR_TAB] === tab) return;
-  // Always hide pitch drawer when leaving Today tab
-  const drawer = document.getElementById('pitch-drawer');
-  if(drawer && tab !== 'today') drawer.style.display = 'none';
   const dir = idx > CUR_TAB ? 1 : -1;
   const fromEl = document.getElementById('screen-' + TABS[CUR_TAB]);
   const toEl = document.getElementById('screen-' + tab);
@@ -654,29 +593,6 @@ function renderToday(){
   if(isViewingToday && actualDayNum === 7 && !sessionStorage.getItem('winner_shown')){
     sessionStorage.setItem('winner_shown','1');
     setTimeout(showWinnerOverlay, 800);
-  }
-
-  // Coaching pitch drawer (Day 5+, only when viewing today)
-  const isTestMode = !!new URLSearchParams(window.location.search).get('day');
-  const pitchState = isTestMode ? null : localStorage.getItem('pitch_state');
-  const drawer = document.getElementById('pitch-drawer');
-  const pitchArea = document.getElementById('pitch-area');
-  if(drawer) drawer.style.display = 'none'; // always hide first
-  if(pitchArea) pitchArea.innerHTML = '';
-  if(isViewingToday && actualDayNum >= 5){
-    if(pitchState === 'done'){
-      if(pitchArea) pitchArea.innerHTML = '<div class="pitch-banner" style="margin-bottom:16px"><div class="pitch-title">You\'re on the list! 🙌</div><div class="pitch-body">Dee will reach out to you at <strong style="color:var(--accent)">' + user.email + '</strong> soon.</div></div>';
-    } else if(pitchState === 'collapsed'){
-      // Show collapsed tab only — no delay
-      if(drawer){ drawer.style.display='block'; drawer.classList.add('collapsed'); drawer.classList.remove('open'); }
-    } else {
-      // Slide up after 1.5s delay
-      if(drawer){
-        drawer.style.display='block';
-        drawer.classList.remove('open','collapsed');
-        setTimeout(() => { drawer.classList.add('open'); }, 1500);
-      }
-    }
   }
 
   // streak
@@ -975,31 +891,6 @@ function dismissWinner(){
   stopConfetti();
 }
 
-function collapsePitchDrawer(){
-  localStorage.setItem('pitch_state','collapsed');
-  document.getElementById('pitch-drawer').classList.remove('open');
-}
-
-function togglePitchDrawer(){
-  const drawer = document.getElementById('pitch-drawer');
-  const isOpen = drawer.classList.contains('open');
-  if(isOpen){ collapsePitchDrawer(); }
-  else { drawer.classList.add('open'); localStorage.setItem('pitch_state', null); }
-}
-
-async function submitPitchInterest(){
-  localStorage.setItem('pitch_state','done');
-  const drawer = document.getElementById('pitch-drawer');
-  if(drawer) drawer.style.display = 'none';
-  const pitchArea = document.getElementById('pitch-area');
-  if(pitchArea) pitchArea.innerHTML = '<div class="pitch-banner" style="margin-bottom:16px"><div class="pitch-title">You\'re on the list! 🙌</div><div class="pitch-body">Dee will reach out to you at <strong style="color:var(--accent)">' + user.email + '</strong> soon.</div></div>';
-  try{
-    await sb.from('glc_coaching_interest').upsert(
-      { email: user.email, nickname: user.nickname, interested_at: new Date().toISOString() },
-      { onConflict:'email' }
-    );
-  }catch(e){}
-}
 
 // === INIT ===
 function init(){
