@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grind Lab — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0D0D0D;--accent:#FF6B35;--gold:#FFD23F;--text:#F5F0E8;--muted:#8A8A8A;--card:#1A1A1A;--border:#2A2A2A}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;padding:24px}
+h1{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--accent);letter-spacing:.05em;margin-bottom:4px}
+.sub{font-size:13px;color:var(--muted);margin-bottom:32px}
+.section{margin-bottom:40px}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.badge{background:var(--accent);color:#fff;font-size:12px;padding:2px 10px;border-radius:20px;font-family:'DM Sans',sans-serif;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border)}
+td{padding:12px;border-bottom:1px solid #1f1f1f;vertical-align:middle}
+tr:hover td{background:#1c1c1c}
+.nick{font-weight:700;color:var(--text)}
+.email{color:var(--muted);font-size:12px}
+.time{color:var(--muted);font-size:12px}
+.pts{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold)}
+.del-btn{background:transparent;border:1px solid #3a1a1a;color:#cc4444;font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;cursor:pointer;transition:all .15s}
+.del-btn:hover{background:#3a1a1a;color:#ff6666}
+.loading{color:var(--muted);font-size:14px;padding:20px 0}
+.empty{color:var(--muted);font-size:14px;font-style:italic;padding:20px 0}
+/* Login */
+#login-screen{max-width:320px;margin:80px auto;text-align:center}
+.inp{width:100%;padding:14px 18px;background:var(--card);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;outline:none;margin-bottom:12px}
+.inp:focus{border-color:var(--accent)}
+.btn{display:block;width:100%;padding:14px;background:var(--accent);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.08em;border:none;border-radius:50px;cursor:pointer;margin-bottom:8px}
+.err{color:#ff4444;font-size:13px;margin-top:8px}
+.stat-row{display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;flex:1;min-width:120px}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--gold)}
+.stat-lbl{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <h1>ADMIN</h1>
+  <p class="sub" style="margin-bottom:24px">Grind Lab Challenge Dashboard</p>
+  <input class="inp" id="pwd" type="password" placeholder="Admin password" onkeydown="if(event.key==='Enter')login()">
+  <button class="btn" onclick="login()">ENTER</button>
+  <div class="err" id="pwd-err"></div>
+</div>
+
+<div id="dashboard" style="display:none">
+  <h1>GRIND LAB ADMIN</h1>
+  <p class="sub">Challenge Dashboard · <a href="#" onclick="logout()" style="color:var(--accent)">Sign out</a></p>
+
+  <div class="stat-row" id="stats"></div>
+
+  <div class="section">
+    <div class="section-title">Participants <span class="badge" id="p-count">0</span></div>
+    <div id="participants-table"><div class="loading">Loading...</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Coaching Interest 🙋 <span class="badge" id="c-count">0</span></div>
+    <div id="coaching-table"><div class="loading">Loading...</div></div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://bqqoczbminqhknwbhslh.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxcW9jemJtaW5xaGtud2Joc2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNDA4NTYsImV4cCI6MjA5MDgxNjg1Nn0.-NBZEI_NXx3IsHXCyrPB3lLvJtWq0mzUsxnADzyu6pA';
+const ADMIN_PASSWORD = 'grindlab2026';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+function login(){
+  const pwd = document.getElementById('pwd').value;
+  if(pwd !== ADMIN_PASSWORD){ document.getElementById('pwd-err').textContent='Wrong password.'; return; }
+  sessionStorage.setItem('glc_admin','1');
+  showDashboard();
+}
+
+function logout(){
+  sessionStorage.removeItem('glc_admin');
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('login-screen').style.display='block';
+}
+
+function fmt(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) + ' ' + d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+
+async function showDashboard(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  await Promise.all([loadParticipants(), loadCoaching(), loadStats()]);
+}
+
+async function loadStats(){
+  const [{ count: pCount }, { count: cCount }, { data: lbData }] = await Promise.all([
+    sb.from('glc_participants').select('*', { count:'exact', head:true }),
+    sb.from('glc_coaching_interest').select('*', { count:'exact', head:true }),
+    sb.from('glc_leaderboard').select('points').order('points',{ascending:false}).limit(1)
+  ]);
+  const topScore = lbData && lbData[0] ? lbData[0].points : 0;
+  document.getElementById('stats').innerHTML =
+    '<div class="stat"><div class="stat-val">'+(pCount||0)+'</div><div class="stat-lbl">Participants</div></div>' +
+    '<div class="stat"><div class="stat-val">'+(cCount||0)+'</div><div class="stat-lbl">Want Coaching</div></div>' +
+    '<div class="stat"><div class="stat-val">'+topScore+'</div><div class="stat-lbl">Top Score</div></div>';
+}
+
+async function loadParticipants(){
+  const { data } = await sb.from('glc_participants').select('*').order('joined_at',{ascending:false});
+  const el = document.getElementById('participants-table');
+  document.getElementById('p-count').textContent = data ? data.length : 0;
+  if(!data || !data.length){ el.innerHTML='<div class="empty">No participants yet.</div>'; return; }
+  el.innerHTML = '<table><thead><tr><th>Nickname</th><th>Email</th><th>Joined</th><th>Last Active</th><th>Points</th><th></th></tr></thead><tbody id="p-body"></tbody></table>';
+  // Fetch points from leaderboard
+  const { data: lb } = await sb.from('glc_leaderboard').select('email,points,streak');
+  const lbMap = {};
+  (lb||[]).forEach(r => lbMap[r.email] = r);
+  const body = document.getElementById('p-body');
+  data.forEach(p => {
+    const pts = lbMap[p.email] ? lbMap[p.email].points : 0;
+    const streak = lbMap[p.email] ? lbMap[p.email].streak : 0;
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><div class="nick">'+p.nickname+'</div></td>' +
+      '<td class="email">'+p.email+'</td>' +
+      '<td class="time">'+fmt(p.joined_at)+'</td>' +
+      '<td class="time">'+fmt(p.last_active)+'</td>' +
+      '<td class="pts">'+pts+(streak>0?' 🔥'+streak:'')+'</td>' +
+      '<td><button class="del-btn" onclick="deleteUser(\''+p.email+'\',this)">Delete</button></td>';
+    body.appendChild(tr);
+  });
+}
+
+async function loadCoaching(){
+  const { data } = await sb.from('glc_coaching_interest').select('*').order('interested_at',{ascending:false});
+  const el = document.getElementById('coaching-table');
+  document.getElementById('c-count').textContent = data ? data.length : 0;
+  if(!data || !data.length){ el.innerHTML='<div class="empty">No coaching interest yet.</div>'; return; }
+  el.innerHTML = '<table><thead><tr><th>Nickname</th><th>Email</th><th>Interested At</th></tr></thead><tbody id="c-body"></tbody></table>';
+  const body = document.getElementById('c-body');
+  data.forEach(p => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><div class="nick">'+p.nickname+'</div></td>' +
+      '<td class="email">'+p.email+'</td>' +
+      '<td class="time">'+fmt(p.interested_at)+'</td>';
+    body.appendChild(tr);
+  });
+}
+
+async function deleteUser(email, btn){
+  if(!confirm('Delete '+email+'? This removes them from all tables.')) return;
+  btn.textContent='Deleting...';
+  btn.disabled=true;
+  await Promise.all([
+    sb.from('glc_participants').delete().eq('email',email),
+    sb.from('glc_leaderboard').delete().eq('email',email),
+    sb.from('glc_coaching_interest').delete().eq('email',email),
+  ]);
+  btn.closest('tr').remove();
+  loadStats();
+}
+
+// Auto-login if session active
+if(sessionStorage.getItem('glc_admin')==='1') showDashboard();
+</script>
+</body>
+</html>

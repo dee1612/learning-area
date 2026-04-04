@@ -485,17 +485,21 @@ function doSignup(){
   err.textContent='';
   user = { nickname:nick, email, points:0, streak:0, lastCheckIn:null, days:[] };
   saveUser();
-  // Capture email in Supabase immediately on signup
-  sb.from('glc_leaderboard').upsert(
-    { email, nickname:nick, points:0, streak:0, updated_at: new Date().toISOString() },
-    { onConflict:'email' }
-  ).then(()=>{}).catch(()=>{});
+  const now = new Date().toISOString();
+  sb.from('glc_leaderboard').upsert({ email, nickname:nick, points:0, streak:0, updated_at:now },{ onConflict:'email' }).then(()=>{}).catch(()=>{});
+  sb.from('glc_participants').upsert({ email, nickname:nick, joined_at:now, last_active:now },{ onConflict:'email' }).then(()=>{}).catch(()=>{});
   localStorage.setItem(CUR_KEY, email);
   enterApp();
 }
 
 // === NAVIGATION ===
 function enterApp(){
+  // Update last_active on every login
+  sb.from('glc_participants').upsert(
+    { email:user.email, nickname:user.nickname, last_active:new Date().toISOString() },
+    { onConflict:'email' }
+  ).then(()=>{}).catch(()=>{});
+
   const ob = document.getElementById('screen-onboarding');
   ob.style.transition = 'opacity .4s ease';
   ob.style.opacity = '0';
@@ -573,14 +577,19 @@ function renderToday(){
   // Coaching pitch (Day 5+)
   const pitchArea = document.getElementById('pitch-area');
   if(pitchArea){
-    if(dayNum >= 5 && !localStorage.getItem('pitch_dismissed')){
-      pitchArea.innerHTML =
-        '<div class="pitch-banner">' +
-        '<div class="pitch-title">Ready to go further? 💪</div>' +
-        '<div class="pitch-body">Work 1:1 with Dee for personalised nutrition coaching built around your life — not a generic plan.</div>' +
-        '<a href="https://form.jotform.com/243235558047055" class="pitch-cta">BOOK A FREE CALL</a>' +
-        '<div class="pitch-dismiss" onclick="dismissPitch()">maybe later</div>' +
-        '</div>';
+    const pitchState = localStorage.getItem('pitch_state'); // null | 'dismissed' | 'interested' | 'done'
+    if(dayNum >= 5 && pitchState !== 'dismissed' && pitchState !== 'done'){
+      if(pitchState === 'interested'){
+        pitchArea.innerHTML = '<div class="pitch-banner"><div class="pitch-title">We\'ll be in touch! 🙌</div><div class="pitch-body">Dee will reach out to you at <strong style="color:var(--accent)">' + user.email + '</strong> soon.</div></div>';
+      } else {
+        pitchArea.innerHTML =
+          '<div class="pitch-banner">' +
+          '<div class="pitch-title">Want 1:1 coaching? 💪</div>' +
+          '<div class="pitch-body">Personalised nutrition &amp; fitness coaching with Dee, built around your life — not a generic plan.</div>' +
+          '<button class="btn-cta" style="margin-bottom:10px" onclick="showPitchConfirm()">YES, I\'M INTERESTED</button>' +
+          '<button class="btn-ghost" onclick="dismissPitch()">No thanks</button>' +
+          '</div>';
+      }
     } else {
       pitchArea.innerHTML = '';
     }
@@ -883,9 +892,37 @@ function dismissWinner(){
 }
 
 function dismissPitch(){
-  localStorage.setItem('pitch_dismissed','1');
+  localStorage.setItem('pitch_state','dismissed');
   const el = document.getElementById('pitch-area');
   if(el) el.innerHTML='';
+}
+
+function showPitchConfirm(){
+  const pitchArea = document.getElementById('pitch-area');
+  if(!pitchArea) return;
+  pitchArea.innerHTML =
+    '<div class="pitch-banner">' +
+    '<div class="pitch-title">Confirm your email 📧</div>' +
+    '<div class="pitch-body">We\'ll use this to reach out to you directly.</div>' +
+    '<input class="inp" id="pitch-email" type="email" value="' + (user.email||'') + '" style="margin-bottom:12px">' +
+    '<button class="btn-cta" style="margin-bottom:10px" onclick="submitPitchInterest()">CONFIRM — REACH OUT TO ME</button>' +
+    '<button class="btn-ghost" onclick="dismissPitch()">Actually, no thanks</button>' +
+    '</div>';
+}
+
+async function submitPitchInterest(){
+  const emailEl = document.getElementById('pitch-email');
+  const email = emailEl ? emailEl.value.trim().toLowerCase() : user.email;
+  if(!email || !email.includes('@')){ return; }
+  localStorage.setItem('pitch_state','done');
+  try{
+    await sb.from('glc_coaching_interest').upsert(
+      { email, nickname: user.nickname, interested_at: new Date().toISOString() },
+      { onConflict:'email' }
+    );
+  }catch(e){}
+  const pitchArea = document.getElementById('pitch-area');
+  if(pitchArea) pitchArea.innerHTML = '<div class="pitch-banner"><div class="pitch-title">You\'re on the list! 🙌</div><div class="pitch-body">Dee will reach out to you at <strong style="color:var(--accent)">' + email + '</strong> soon.</div></div>';
 }
 
 // === INIT ===
