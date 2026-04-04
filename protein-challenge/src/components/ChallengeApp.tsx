@@ -5,9 +5,11 @@ import { type ParticipantState, saveState } from '@/lib/store'
 import { CHALLENGE_DAYS } from '@/lib/challengeData'
 import { getLevelFromXP, getXPProgressInLevel, getXPToNextLevel } from '@/lib/gamification'
 import DayView from './DayView'
+import Day0View from './Day0View'
 import ProgressView from './ProgressView'
 import ResultsView from './ResultsView'
 import AvatarView from './AvatarView'
+import RecipesView from './RecipesView'
 import NotificationBell from './NotificationBell'
 import XPBar from './XPBar'
 import Logo from './Logo'
@@ -81,6 +83,13 @@ export default function ChallengeApp({ initialState, onStateChange }: Props) {
         {/* Day dots */}
         <div className="max-w-lg mx-auto px-4 pb-3">
           <div className="flex items-center justify-between">
+            {/* Day 0 dot */}
+            <button onClick={() => changeView('day-0')} className="flex flex-col items-center gap-1 group">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all bg-teal-50 text-teal-500 border border-teal-200 ${view === 'day-0' ? 'ring-2 ring-offset-1 ring-teal-400' : ''}`}>
+                0
+              </div>
+              <span className="text-[9px] text-gray-400 font-medium hidden sm:block">Prep</span>
+            </button>
             {CHALLENGE_DAYS.map(d => {
               const done = state.days[d.num]?.completed
               const isToday = d.num === currentDayNum
@@ -112,7 +121,8 @@ export default function ChallengeApp({ initialState, onStateChange }: Props) {
 
       {/* ── MAIN CONTENT ── */}
       <main className="flex-1 pb-24 max-w-lg mx-auto w-full">
-        {view.startsWith('day-') && (() => {
+        {view === 'day-0' && <Day0View state={state} onStateChange={update} />}
+        {view.startsWith('day-') && !view.startsWith('day-0') && (() => {
           const dayNum = parseInt(view.split('-')[1])
           const dayData = CHALLENGE_DAYS[dayNum - 1]
           if (!dayData) return null
@@ -127,16 +137,17 @@ export default function ChallengeApp({ initialState, onStateChange }: Props) {
         })()}
         {view === 'progress' && <ProgressView state={state} onNavigateDay={(n) => changeView(`day-${n}`)} />}
         {view === 'results' && <ResultsView state={state} />}
-{view === 'avatar' && <AvatarView state={state} onStateChange={update} onBack={() => changeView(state.currentView || 'day-1')} />}
+        {view === 'recipes' && <RecipesView />}
+        {view === 'avatar' && <AvatarView state={state} onStateChange={update} onBack={() => changeView(state.currentView || 'day-1')} />}
       </main>
 
       {/* ── BOTTOM NAV ── */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-lg bottom-nav z-40 no-print">
         <div className="max-w-lg mx-auto flex items-center justify-around px-2 py-2">
           {[
-            { v: `day-${currentDayNum}`, icon: '📅', label: "Today" },
+            { v: `day-${currentDayNum}`, icon: '📅', label: 'Today' },
             { v: 'progress', icon: '📊', label: 'Progress' },
-{ v: 'avatar', icon: '🦸‍♀️', label: 'Avatar' },
+            { v: 'recipes', icon: '🍽️', label: 'Recipes' },
             { v: 'results', icon: '🏅', label: 'Results' },
           ].map(item => (
             <button
