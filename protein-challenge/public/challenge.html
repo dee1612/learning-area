@@ -577,6 +577,14 @@ function renderToday(){
   // Day counter + nav buttons
   const actualDayNum = getDayNum();
   const todayStr = today();
+
+  // In test mode (?day=N), use a fake date so real logged data doesn't bleed through
+  const testOverride = new URLSearchParams(window.location.search).get('day');
+  if(testOverride){
+    const fakeBase = new Date('2000-01-01');
+    fakeBase.setDate(fakeBase.getDate() + actualDayNum - 1);
+    viewingDate = fakeBase.toISOString().split('T')[0];
+  }
   const isViewingToday = viewingDate === todayStr;
 
   // Calculate viewed day number from start
