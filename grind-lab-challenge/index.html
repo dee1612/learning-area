@@ -301,6 +301,7 @@
     </div>
     <div class="meals" id="meals"></div>
     <div class="pts-total" id="pts-total"></div>
+    <button id="final-results-btn" class="btn-cta" style="display:none;margin:20px 0 8px;width:100%;font-size:20px;letter-spacing:.08em" onclick="showWinnerOverlay()">&#127942; FINAL RESULTS</button>
   </div>
 
   <!-- LEADERBOARD -->
@@ -585,7 +586,7 @@ function renderToday(){
     fakeBase.setDate(fakeBase.getDate() + actualDayNum - 1);
     viewingDate = fakeBase.toISOString().split('T')[0];
   }
-  const isViewingToday = viewingDate === todayStr;
+  const isViewingToday = testOverride ? true : (viewingDate === todayStr);
 
   // Calculate viewed day number from start
   const sorted = [...user.days].sort((a,b)=>a.date.localeCompare(b.date));
@@ -598,16 +599,15 @@ function renderToday(){
     if(dcEl) dcEl.textContent = 'DAY ' + Math.max(1, viewedDayNum) + ' \u2022 PAST';
   }
 
-  // Prev/next nav buttons
+  // Prev/next nav buttons — hide in test mode
   const btnPrev = document.getElementById('btn-day-prev');
   const btnNext = document.getElementById('btn-day-next');
-  if(btnPrev) btnPrev.disabled = viewingDate <= startDate;
-  if(btnNext) btnNext.disabled = isViewingToday;
-
-  // Day 7 winner announcement (once per session) — only when on today
-  if(isViewingToday && actualDayNum === 7 && !sessionStorage.getItem('winner_shown')){
-    sessionStorage.setItem('winner_shown','1');
-    setTimeout(showWinnerOverlay, 800);
+  if(testOverride){
+    if(btnPrev) btnPrev.style.visibility = 'hidden';
+    if(btnNext) btnNext.style.visibility = 'hidden';
+  } else {
+    if(btnPrev){ btnPrev.style.visibility=''; btnPrev.disabled = viewingDate <= startDate; }
+    if(btnNext){ btnNext.style.visibility=''; btnNext.disabled = isViewingToday; }
   }
 
   // streak
@@ -641,6 +641,13 @@ function renderToday(){
   });
 
   updatePtsDisplay();
+
+  // Day 7: show FINAL RESULTS button when all meals answered
+  const finalBtn = document.getElementById('final-results-btn');
+  if(finalBtn){
+    const allAnswered = day.breakfast !== null && day.lunch !== null && day.dinner !== null;
+    finalBtn.style.display = (actualDayNum >= 7 && allAnswered) ? 'block' : 'none';
+  }
 }
 
 function updatePtsDisplay(){
@@ -747,6 +754,12 @@ function handleMeal(meal, answer, ev){
     updatePtsDisplay();
     const d = getDayData(viewingDate || today());
     if(d.breakfast===true && d.lunch===true && d.dinner===true) triggerPerfectDay();
+    // Show FINAL RESULTS button on day 7 once all meals answered
+    const finalBtn = document.getElementById('final-results-btn');
+    if(finalBtn){
+      const allAnswered = d.breakfast !== null && d.lunch !== null && d.dinner !== null;
+      finalBtn.style.display = (getDayNum() >= 7 && allAnswered) ? 'block' : 'none';
+    }
   }, 350);
 }
 
