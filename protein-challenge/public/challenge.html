@@ -266,7 +266,7 @@
     .win-pts{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gold)}
     .win-dismiss{font-size:13px;color:var(--text-secondary);cursor:pointer;text-decoration:underline;margin-top:8px}
 
-    /* COMPLETION OVERLAY (Day 18+) */
+    /* COMPLETION OVERLAY (Day 11+) */
     #done-overlay{
       position:fixed;inset:0;z-index:8500;
       background:#050a05;
@@ -350,11 +350,11 @@
   <div class="win-dismiss" onclick="dismissWinner()">close</div>
 </div>
 
-<!-- DONE OVERLAY (Day 18+) -->
+<!-- DONE OVERLAY (Day 11+) -->
 <div id="done-overlay">
   <div class="done-emoji">&#127881;</div>
   <div class="done-title">YOU DID IT.</div>
-  <div class="done-sub">17 days of showing up for yourself.<br>That's not a challenge — that's a lifestyle.</div>
+  <div class="done-sub">10 days of showing up for yourself.<br>That's not a challenge — that's a lifestyle.</div>
   <div class="pitch-banner" style="margin-bottom:0">
     <div class="pitch-title">Ready to go further?</div>
     <div class="pitch-body">Work 1:1 with Dee for personalised nutrition coaching built around your life — not a generic plan.</div>
@@ -555,9 +555,9 @@ function renderToday(){
 
   // Day counter
   const dayNum = getDayNum();
-  const maxDays = dayNum <= 7 ? 7 : 17;
+  const maxDays = dayNum <= 7 ? 7 : 10;
   const dcEl = document.getElementById('day-counter');
-  if(dcEl) dcEl.textContent = 'DAY ' + Math.min(dayNum, 17) + ' OF ' + maxDays;
+  if(dcEl) dcEl.textContent = 'DAY ' + Math.min(dayNum, 10) + ' OF ' + maxDays;
 
   // Day 7 winner announcement (once per session)
   if(dayNum === 7 && !sessionStorage.getItem('winner_shown')){
@@ -565,8 +565,8 @@ function renderToday(){
     setTimeout(showWinnerOverlay, 800);
   }
 
-  // Day 18+ completion screen
-  if(dayNum > 17){
+  // Day 11+ completion screen
+  if(dayNum > 10){
     setTimeout(() => document.getElementById('done-overlay').classList.add('show'), 600);
   }
 
