@@ -445,6 +445,8 @@ function getDayData(){
 }
 
 function getDayNum(){
+  const override = new URLSearchParams(window.location.search).get('day');
+  if(override) return parseInt(override);
   const sorted = [...user.days].sort((a,b)=>a.date.localeCompare(b.date));
   const start = sorted.length > 0 ? sorted[0].date : today();
   return Math.floor((new Date(today()) - new Date(start)) / 86400000) + 1;
@@ -457,24 +459,49 @@ function hadYesYesterday(){
 }
 
 // === AUTH ===
-function checkEmail(){
+async function checkEmail(){
   const email = document.getElementById('inp-email').value.trim().toLowerCase();
   const err = document.getElementById('auth-err');
   if(!email || !email.includes('@')){ err.textContent='Enter a valid email.'; return }
+  err.textContent='Checking...';
+
+  // 1. Check localStorage first
   const users = getUsers();
   if(users[email]){
-    // Returning user — log straight in
     err.textContent='';
     user = users[email];
     localStorage.setItem(CUR_KEY, email);
     enterApp();
-  } else {
-    // New user — ask for nickname
-    err.textContent='';
-    document.getElementById('step-email').style.display='none';
-    document.getElementById('step-nick').style.display='block';
-    setTimeout(() => document.getElementById('inp-nick').focus(), 100);
+    return;
   }
+
+  // 2. Check Supabase — maybe they used a different device
+  try{
+    const [{ data: pData }, { data: lbData }] = await Promise.all([
+      sb.from('glc_participants').select('*').eq('email', email).maybeSingle(),
+      sb.from('glc_leaderboard').select('*').eq('email', email).maybeSingle()
+    ]);
+    if(pData){
+      // Known user — restore and log in
+      err.textContent='';
+      user = {
+        nickname: pData.nickname, email,
+        points: lbData ? lbData.points : 0,
+        streak: lbData ? lbData.streak : 0,
+        lastCheckIn: null, days: []
+      };
+      saveUser();
+      localStorage.setItem(CUR_KEY, email);
+      enterApp();
+      return;
+    }
+  }catch(e){}
+
+  // 3. Truly new — ask for nickname
+  err.textContent='';
+  document.getElementById('step-email').style.display='none';
+  document.getElementById('step-nick').style.display='block';
+  setTimeout(() => document.getElementById('inp-nick').focus(), 100);
 }
 
 function doSignup(){
