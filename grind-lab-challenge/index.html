@@ -225,6 +225,28 @@
     .pd-sub{font-size:16px;color:var(--gold);margin-top:14px;font-weight:700;letter-spacing:.12em}
     #confetti-canvas{position:fixed;inset:0;z-index:9001;pointer-events:none}
 
+    /* PITCH DRAWER */
+    #pitch-drawer{
+      position:fixed;left:0;right:0;bottom:72px;z-index:400;
+      transform:translateY(calc(100% - 48px));
+      transition:transform .4s cubic-bezier(.4,0,.2,1);
+    }
+    #pitch-drawer.open{ transform:translateY(0); }
+    .pitch-tab{
+      background:var(--accent);padding:12px 24px;
+      display:flex;align-items:center;justify-content:space-between;
+      cursor:pointer;border-radius:16px 16px 0 0;
+      font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.06em;color:#fff;
+    }
+    .pitch-tab-arrow{font-size:16px;transition:transform .3s}
+    #pitch-drawer.open .pitch-tab-arrow{transform:rotate(180deg)}
+    .pitch-drawer-body{
+      background:#1a0800;border:1px solid rgba(255,107,53,.25);
+      border-bottom:none;padding:20px 24px 24px;
+    }
+    .pitch-drawer-body .pitch-title{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);margin-bottom:6px}
+    .pitch-drawer-body .pitch-body{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px}
+
     /* UTIL */
     .gap8{height:8px}.gap16{height:16px}.gap24{height:24px}
 
@@ -339,6 +361,20 @@
   </div>
 
 </div><!-- /app -->
+
+<!-- PITCH DRAWER -->
+<div id="pitch-drawer">
+  <div class="pitch-tab" onclick="togglePitchDrawer()">
+    <span>APPLY FOR 1:1 COACHING</span>
+    <span class="pitch-tab-arrow">▲</span>
+  </div>
+  <div class="pitch-drawer-body">
+    <div class="pitch-title">Want 1:1 coaching? 💪</div>
+    <div class="pitch-body">Personalised nutrition &amp; fitness coaching with Dee, built around your life — not a generic plan.</div>
+    <button class="btn-cta" style="margin-bottom:10px" onclick="submitPitchInterest()">YES, REACH OUT TO ME</button>
+    <button class="btn-ghost" onclick="collapsePitchDrawer()">No thanks</button>
+  </div>
+</div>
 
 <!-- DAY 7 WINNER OVERLAY -->
 <div id="winner-overlay">
@@ -601,25 +637,28 @@ function renderToday(){
     setTimeout(() => document.getElementById('done-overlay').classList.add('show'), 600);
   }
 
-  // Coaching pitch (Day 5+)
+  // Coaching pitch drawer (Day 5+)
+  const isTestMode = !!new URLSearchParams(window.location.search).get('day');
+  const pitchState = isTestMode ? null : localStorage.getItem('pitch_state');
+  const drawer = document.getElementById('pitch-drawer');
   const pitchArea = document.getElementById('pitch-area');
-  if(pitchArea){
-    const pitchState = localStorage.getItem('pitch_state');
-    if(dayNum >= 5 && pitchState !== 'dismissed' && pitchState !== 'done'){
-      if(pitchState === 'done'){
-        pitchArea.innerHTML = '<div class="pitch-banner"><div class="pitch-title">We\'ll be in touch! 🙌</div><div class="pitch-body">Dee will reach out to you at <strong style="color:var(--accent)">' + user.email + '</strong> soon.</div></div>';
-      } else {
-        pitchArea.innerHTML =
-          '<div class="pitch-banner">' +
-          '<div class="pitch-title">Want 1:1 coaching? 💪</div>' +
-          '<div class="pitch-body">Personalised nutrition &amp; fitness coaching with Dee, built around your life — not a generic plan.</div>' +
-          '<button class="btn-cta" style="margin-bottom:10px" onclick="submitPitchInterest()">YES, REACH OUT TO ME</button>' +
-          '<button class="btn-ghost" onclick="dismissPitch()">No thanks</button>' +
-          '</div>';
-      }
+  if(dayNum >= 5){
+    if(pitchState === 'done'){
+      // Already said YES — show thank you inline, hide drawer
+      if(drawer) drawer.style.display = 'none';
+      if(pitchArea) pitchArea.innerHTML = '<div class="pitch-banner" style="margin-bottom:16px"><div class="pitch-title">You\'re on the list! 🙌</div><div class="pitch-body">Dee will reach out to you at <strong style="color:var(--accent)">' + user.email + '</strong> soon.</div></div>';
     } else {
-      pitchArea.innerHTML = '';
+      // Show drawer
+      if(pitchArea) pitchArea.innerHTML = '';
+      if(drawer){
+        drawer.style.display = 'block';
+        if(pitchState === 'collapsed') drawer.classList.remove('open');
+        else drawer.classList.add('open');
+      }
     }
+  } else {
+    if(drawer) drawer.style.display = 'none';
+    if(pitchArea) pitchArea.innerHTML = '';
   }
 
   // streak
@@ -918,22 +957,30 @@ function dismissWinner(){
   stopConfetti();
 }
 
-function dismissPitch(){
-  localStorage.setItem('pitch_state','dismissed');
-  const el = document.getElementById('pitch-area');
-  if(el) el.innerHTML='';
+function collapsePitchDrawer(){
+  localStorage.setItem('pitch_state','collapsed');
+  document.getElementById('pitch-drawer').classList.remove('open');
+}
+
+function togglePitchDrawer(){
+  const drawer = document.getElementById('pitch-drawer');
+  const isOpen = drawer.classList.contains('open');
+  if(isOpen){ collapsePitchDrawer(); }
+  else { drawer.classList.add('open'); localStorage.setItem('pitch_state', null); }
 }
 
 async function submitPitchInterest(){
   localStorage.setItem('pitch_state','done');
+  const drawer = document.getElementById('pitch-drawer');
+  if(drawer) drawer.style.display = 'none';
+  const pitchArea = document.getElementById('pitch-area');
+  if(pitchArea) pitchArea.innerHTML = '<div class="pitch-banner" style="margin-bottom:16px"><div class="pitch-title">You\'re on the list! 🙌</div><div class="pitch-body">Dee will reach out to you at <strong style="color:var(--accent)">' + user.email + '</strong> soon.</div></div>';
   try{
     await sb.from('glc_coaching_interest').upsert(
       { email: user.email, nickname: user.nickname, interested_at: new Date().toISOString() },
       { onConflict:'email' }
     );
   }catch(e){}
-  const pitchArea = document.getElementById('pitch-area');
-  if(pitchArea) pitchArea.innerHTML = '<div class="pitch-banner"><div class="pitch-title">You\'re on the list! 🙌</div><div class="pitch-body">Dee will reach out to you at <strong style="color:var(--accent)">' + user.email + '</strong> soon.</div></div>';
 }
 
 // === INIT ===
