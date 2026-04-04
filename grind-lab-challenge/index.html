@@ -227,6 +227,58 @@
 
     /* UTIL */
     .gap8{height:8px}.gap16{height:16px}.gap24{height:24px}
+
+    /* COACHING PITCH BANNER */
+    .pitch-banner{
+      background:linear-gradient(135deg,#1a0a00,#2a1200);
+      border:1px solid rgba(255,107,53,.3);border-radius:16px;
+      padding:20px;margin-bottom:20px;text-align:center;
+    }
+    .pitch-title{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);margin-bottom:6px}
+    .pitch-body{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px}
+    .pitch-cta{
+      display:inline-block;padding:12px 28px;
+      background:var(--accent);color:#fff;
+      font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.08em;
+      border-radius:50px;text-decoration:none;
+      box-shadow:0 4px 18px rgba(255,107,53,.3);
+    }
+    .pitch-dismiss{font-size:11px;color:var(--text-secondary);margin-top:12px;cursor:pointer;text-decoration:underline}
+
+    /* DAY 7 WINNER OVERLAY */
+    #winner-overlay{
+      position:fixed;inset:0;z-index:8000;
+      background:#0a0500;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:32px;text-align:center;
+      opacity:0;pointer-events:none;transition:opacity .4s ease;overflow-y:auto;
+    }
+    #winner-overlay.show{opacity:1;pointer-events:all}
+    .win-crown{font-size:72px;margin-bottom:8px}
+    .win-title{font-family:'Bebas Neue',sans-serif;font-size:56px;color:var(--gold);line-height:1;margin-bottom:8px}
+    .win-sub{font-size:15px;color:var(--text-secondary);margin-bottom:32px;line-height:1.5}
+    .win-lb{width:100%;margin-bottom:28px}
+    .win-row{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;margin-bottom:4px;background:var(--card-bg)}
+    .win-row.first{background:linear-gradient(135deg,rgba(255,210,63,.15),rgba(255,107,53,.1));border:1px solid rgba(255,210,63,.3)}
+    .win-rank{font-family:'Bebas Neue',sans-serif;font-size:20px;width:28px;text-align:center;color:var(--text-secondary)}
+    .win-row.first .win-rank{color:var(--gold)}
+    .win-nick{flex:1;font-weight:600;font-size:14px}
+    .win-pts{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gold)}
+    .win-dismiss{font-size:13px;color:var(--text-secondary);cursor:pointer;text-decoration:underline;margin-top:8px}
+
+    /* COMPLETION OVERLAY (Day 18+) */
+    #done-overlay{
+      position:fixed;inset:0;z-index:8500;
+      background:#050a05;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:32px;text-align:center;
+      opacity:0;pointer-events:none;transition:opacity .4s ease;overflow-y:auto;
+    }
+    #done-overlay.show{opacity:1;pointer-events:all}
+    .done-emoji{font-size:72px;margin-bottom:12px}
+    .done-title{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--accent);line-height:1;margin-bottom:8px}
+    .done-sub{font-size:15px;color:var(--text-secondary);line-height:1.6;margin-bottom:32px}
+    .done-dismiss{font-size:12px;color:var(--text-secondary);cursor:pointer;text-decoration:underline;margin-top:16px}
   </style>
 </head>
 <body>
@@ -238,19 +290,16 @@
     <div class="ob-headline">YOUR<br>PROTEIN.<br>YOUR PALM.<br>7 DAYS.</div>
     <div class="ob-sub">No counting. No apps. Just show up.</div>
 
-    <div id="form-signup">
-      <div class="form-group"><label class="form-label">Nickname</label><input class="inp" id="inp-nick" type="text" placeholder="e.g. Queen D" maxlength="20" autocomplete="off"></div>
-      <div class="form-group"><label class="form-label">Email</label><input class="inp" id="inp-email" type="email" placeholder="your@email.com" autocomplete="off"></div>
+    <div id="step-email">
+      <div class="form-group"><label class="form-label">Your Email</label><input class="inp" id="inp-email" type="email" placeholder="your@email.com" autocomplete="off" inputmode="email"></div>
       <div class="gap8"></div>
-      <button class="btn-cta" onclick="doSignup()">LET'S GO</button>
-      <div class="form-toggle">Already a Grinder? <a onclick="showLogin()">Sign in &rarr;</a></div>
+      <button class="btn-cta" onclick="checkEmail()">CONTINUE &rarr;</button>
     </div>
 
-    <div id="form-login" style="display:none">
-      <div class="form-group"><label class="form-label">Email</label><input class="inp" id="inp-lemail" type="email" placeholder="your@email.com" autocomplete="off"></div>
+    <div id="step-nick" style="display:none">
+      <div class="form-group"><label class="form-label">Pick a Nickname</label><input class="inp" id="inp-nick" type="text" placeholder="e.g. Queen D" maxlength="20" autocomplete="off"></div>
       <div class="gap8"></div>
-      <button class="btn-cta" onclick="doLogin()">SIGN IN</button>
-      <div class="form-toggle">New here? <a onclick="showSignup()">Sign up &rarr;</a></div>
+      <button class="btn-cta" onclick="doSignup()">LET'S GO 🔥</button>
     </div>
 
     <div class="err" id="auth-err"></div>
@@ -264,6 +313,7 @@
       <div id="streak-area"></div>
     </div>
     <div class="meals" id="meals"></div>
+    <div id="pitch-area"></div>
     <div class="pts-total" id="pts-total"></div>
   </div>
 
@@ -289,6 +339,29 @@
   </div>
 
 </div><!-- /app -->
+
+<!-- DAY 7 WINNER OVERLAY -->
+<div id="winner-overlay">
+  <div class="win-crown">&#127942;</div>
+  <div class="win-title">DAY 7<br>WINNERS</div>
+  <div class="win-sub">Look how far you've all come. 🔥<br>The challenge doesn't stop here.</div>
+  <div class="win-lb" id="win-lb"></div>
+  <button class="btn-cta" onclick="dismissWinner()">KEEP GOING &rarr;</button>
+  <div class="win-dismiss" onclick="dismissWinner()">close</div>
+</div>
+
+<!-- DONE OVERLAY (Day 18+) -->
+<div id="done-overlay">
+  <div class="done-emoji">&#127881;</div>
+  <div class="done-title">YOU DID IT.</div>
+  <div class="done-sub">17 days of showing up for yourself.<br>That's not a challenge — that's a lifestyle.</div>
+  <div class="pitch-banner" style="margin-bottom:0">
+    <div class="pitch-title">Ready to go further?</div>
+    <div class="pitch-body">Work 1:1 with Dee for personalised nutrition coaching built around your life — not a generic plan.</div>
+    <a href="https://grindlabfitness.com/coaching" class="pitch-cta">BOOK A FREE CALL</a>
+  </div>
+  <div class="done-dismiss" onclick="document.getElementById('done-overlay').classList.remove('show')">I'll think about it</div>
+</div>
 
 <!-- BOTTOM NAV -->
 <nav id="bottom-nav">
@@ -371,6 +444,12 @@ function getDayData(){
   return d;
 }
 
+function getDayNum(){
+  const sorted = [...user.days].sort((a,b)=>a.date.localeCompare(b.date));
+  const start = sorted.length > 0 ? sorted[0].date : today();
+  return Math.floor((new Date(today()) - new Date(start)) / 86400000) + 1;
+}
+
 function hadYesYesterday(){
   const y = yesterday();
   const d = user.days.find(x => x.date === y);
@@ -378,43 +457,41 @@ function hadYesYesterday(){
 }
 
 // === AUTH ===
+function checkEmail(){
+  const email = document.getElementById('inp-email').value.trim().toLowerCase();
+  const err = document.getElementById('auth-err');
+  if(!email || !email.includes('@')){ err.textContent='Enter a valid email.'; return }
+  const users = getUsers();
+  if(users[email]){
+    // Returning user — log straight in
+    err.textContent='';
+    user = users[email];
+    localStorage.setItem(CUR_KEY, email);
+    enterApp();
+  } else {
+    // New user — ask for nickname
+    err.textContent='';
+    document.getElementById('step-email').style.display='none';
+    document.getElementById('step-nick').style.display='block';
+    setTimeout(() => document.getElementById('inp-nick').focus(), 100);
+  }
+}
+
 function doSignup(){
   const nick = document.getElementById('inp-nick').value.trim();
   const email = document.getElementById('inp-email').value.trim().toLowerCase();
   const err = document.getElementById('auth-err');
   if(!nick){ err.textContent='Enter a nickname.'; return }
-  if(!email || !email.includes('@')){ err.textContent='Enter a valid email.'; return }
-  const users = getUsers();
-  if(users[email]){ err.textContent='Email already registered. Sign in instead.'; return }
   err.textContent='';
   user = { nickname:nick, email, points:0, streak:0, lastCheckIn:null, days:[] };
   saveUser();
+  // Capture email in Supabase immediately on signup
+  sb.from('glc_leaderboard').upsert(
+    { email, nickname:nick, points:0, streak:0, updated_at: new Date().toISOString() },
+    { onConflict:'email' }
+  ).then(()=>{}).catch(()=>{});
   localStorage.setItem(CUR_KEY, email);
   enterApp();
-}
-
-function doLogin(){
-  const email = document.getElementById('inp-lemail').value.trim().toLowerCase();
-  const err = document.getElementById('auth-err');
-  if(!email){ err.textContent='Enter your email.'; return }
-  const users = getUsers();
-  const u = users[email];
-  if(!u){ err.textContent='No account found. Sign up first.'; return }
-  err.textContent='';
-  user = u;
-  localStorage.setItem(CUR_KEY, email);
-  enterApp();
-}
-
-function showLogin(){
-  document.getElementById('form-signup').style.display='none';
-  document.getElementById('form-login').style.display='block';
-  document.getElementById('auth-err').textContent='';
-}
-function showSignup(){
-  document.getElementById('form-login').style.display='none';
-  document.getElementById('form-signup').style.display='block';
-  document.getElementById('auth-err').textContent='';
 }
 
 // === NAVIGATION ===
@@ -477,11 +554,37 @@ function renderToday(){
   document.getElementById('greeting').textContent = 'Hey ' + user.nickname + ' \uD83D\uDC4B';
 
   // Day counter
-  const sorted = [...user.days].sort((a,b)=>a.date.localeCompare(b.date));
-  const startDate = sorted.length > 0 ? sorted[0].date : today();
-  const dayNum = Math.min(Math.floor((new Date(today()) - new Date(startDate)) / 86400000) + 1, 7);
+  const dayNum = getDayNum();
+  const maxDays = dayNum <= 7 ? 7 : 17;
   const dcEl = document.getElementById('day-counter');
-  if(dcEl) dcEl.textContent = 'DAY ' + dayNum + ' OF 7';
+  if(dcEl) dcEl.textContent = 'DAY ' + Math.min(dayNum, 17) + ' OF ' + maxDays;
+
+  // Day 7 winner announcement (once per session)
+  if(dayNum === 7 && !sessionStorage.getItem('winner_shown')){
+    sessionStorage.setItem('winner_shown','1');
+    setTimeout(showWinnerOverlay, 800);
+  }
+
+  // Day 18+ completion screen
+  if(dayNum > 17){
+    setTimeout(() => document.getElementById('done-overlay').classList.add('show'), 600);
+  }
+
+  // Coaching pitch (Day 5+)
+  const pitchArea = document.getElementById('pitch-area');
+  if(pitchArea){
+    if(dayNum >= 5 && !localStorage.getItem('pitch_dismissed')){
+      pitchArea.innerHTML =
+        '<div class="pitch-banner">' +
+        '<div class="pitch-title">Ready to go further? 💪</div>' +
+        '<div class="pitch-body">Work 1:1 with Dee for personalised nutrition coaching built around your life — not a generic plan.</div>' +
+        '<a href="https://grindlabfitness.com/coaching" class="pitch-cta">BOOK A FREE CALL</a>' +
+        '<div class="pitch-dismiss" onclick="dismissPitch()">maybe later</div>' +
+        '</div>';
+    } else {
+      pitchArea.innerHTML = '';
+    }
+  }
 
   // streak
   const sa = document.getElementById('streak-area');
@@ -757,6 +860,39 @@ function checkStreakReset(){
   }
 }
 
+// === WINNER OVERLAY ===
+async function showWinnerOverlay(){
+  const ov = document.getElementById('winner-overlay');
+  const lbEl = document.getElementById('win-lb');
+  lbEl.innerHTML = '';
+  try{
+    const { data } = await sb.from('glc_leaderboard').select('*').order('points',{ascending:false}).limit(10);
+    const lb = (data && data.length) ? data : getLB();
+    lb.forEach((u2,i) => {
+      const isFirst = i===0;
+      const row = document.createElement('div');
+      row.className = 'win-row' + (isFirst?' first':'');
+      const medals = ['\uD83E\uDD47','\uD83E\uDD48','\uD83E\uDD49'];
+      row.innerHTML = '<div class="win-rank">'+(medals[i]||i+1)+'</div><div class="win-nick">'+u2.nickname+'</div><div class="win-pts">'+u2.points+'</div>';
+      lbEl.appendChild(row);
+    });
+  }catch(e){}
+  ov.classList.add('show');
+  startConfetti();
+}
+
+function dismissWinner(){
+  document.getElementById('winner-overlay').classList.remove('show');
+  stopConfetti();
+}
+
+function dismissPitch(){
+  localStorage.setItem('pitch_dismissed','1');
+  const el = document.getElementById('pitch-area');
+  if(el) el.innerHTML='';
+}
+
+// === INIT ===
 function init(){
   const email = localStorage.getItem(CUR_KEY);
   if(email){
@@ -770,9 +906,8 @@ function init(){
   ob.style.transform='none';
 }
 
-document.getElementById('inp-nick').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('inp-email').focus(); });
-document.getElementById('inp-email').addEventListener('keydown', e => { if(e.key==='Enter') doSignup(); });
-document.getElementById('inp-lemail').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('inp-email').addEventListener('keydown', e => { if(e.key==='Enter') checkEmail(); });
+document.getElementById('inp-nick').addEventListener('keydown', e => { if(e.key==='Enter') doSignup(); });
 
 init();
 </script>
