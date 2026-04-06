@@ -889,12 +889,22 @@ async function renderLeaderboard(){
   document.getElementById('podium').innerHTML = '<div class="lb-empty">Loading... \u23F3</div>';
   document.getElementById('lb-list').innerHTML = '';
   try{
-    const { data } = await sb.from('glc_leaderboard').select('*').order('points', { ascending: false });
-    if(data){
-      saveLB(data); // replace cache — deleted users gone
-      paintLB(data);
+    // Fetch both leaderboard AND active participants in parallel
+    // Filter leaderboard to only users who exist in participants table
+    // This ensures wiped users disappear even if glc_leaderboard delete fails
+    const [{ data: lbData }, { data: pData }] = await Promise.all([
+      sb.from('glc_leaderboard').select('*').order('points', { ascending: false }),
+      sb.from('glc_participants').select('email')
+    ]);
+    if(lbData && pData !== null){
+      const activeEmails = new Set((pData || []).map(p => p.email));
+      const filtered = pData.length === 0 ? [] : lbData.filter(row => activeEmails.has(row.email));
+      saveLB(filtered);
+      paintLB(filtered);
+    } else if(lbData){
+      saveLB(lbData);
+      paintLB(lbData);
     } else {
-      // fallback to local cache
       const cached = getLB();
       if(cached.length) paintLB(cached);
     }
