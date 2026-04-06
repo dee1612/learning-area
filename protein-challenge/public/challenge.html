@@ -127,8 +127,8 @@
       user-select:none;
     }
     .day-dot.done{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 10px rgba(255,107,53,.4)}
-    .day-dot.active{border-color:var(--accent);border-width:3px;color:#fff;background:rgba(255,107,53,.35);transform:scale(1.12)}
-    .day-dot.active.done{background:var(--accent);color:#fff;border-width:2px;box-shadow:0 0 16px rgba(255,107,53,.7);transform:scale(1.12)}
+    .day-dot.active{border:3px solid var(--accent);background:#fff;color:var(--accent);transform:scale(1.15);opacity:1!important}
+    .day-dot.active.done{background:var(--accent);color:#fff;border:3px solid var(--accent);box-shadow:0 0 16px rgba(255,107,53,.7);transform:scale(1.15);opacity:1!important}
     .day-dot.future{opacity:.35}
     .btn-yes{
       display:block;width:100%;padding:15px;
@@ -458,6 +458,32 @@ function hadPerfectDayYesterday(){
   return d && d.breakfast===true && d.lunch===true && d.dinner===true;
 }
 
+// Compute streak from stored days data — counts consecutive perfect days ending today or yesterday
+function computeStreak(){
+  const todayStr = today();
+  const sorted = user.days
+    .filter(d => d.date >= '2025-01-01')
+    .sort((a,b) => b.date.localeCompare(a.date)); // newest first
+  let streak = 0;
+  let expected = null;
+  for(const d of sorted){
+    const perfect = d.breakfast===true && d.lunch===true && d.dinner===true;
+    if(!perfect) { if(expected !== null) break; else continue; }
+    if(expected === null){
+      // First perfect day found — must be today or yesterday to count
+      const diff = Math.floor((new Date(todayStr) - new Date(d.date)) / 86400000);
+      if(diff > 1) break;
+      streak = 1; expected = d.date;
+    } else {
+      const prev = new Date(expected); prev.setDate(prev.getDate()-1);
+      const prevStr = prev.toISOString().split('T')[0];
+      if(d.date === prevStr){ streak++; expected = d.date; }
+      else break;
+    }
+  }
+  return streak;
+}
+
 // === AUTH ===
 async function checkEmail(){
   const email = document.getElementById('inp-email').value.trim().toLowerCase();
@@ -637,6 +663,9 @@ function renderToday(){
 
   // 7 dots
   renderDots(startDate, todayStr);
+
+  // Recompute streak from actual day data every render
+  user.streak = computeStreak();
 
   // streak
   const sa = document.getElementById('streak-area');
