@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Grind Lab — Load Test</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body{background:#0d0d0d;color:#f5f0e8;font-family:monospace;padding:32px;max-width:700px;margin:0 auto}
+  h2{color:#FF6B35;font-size:22px;margin-bottom:8px}
+  p{color:#8a8a8a;margin-bottom:24px;font-size:13px}
+  button{padding:14px 28px;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-right:12px;margin-bottom:12px}
+  #btn-seed{background:#FF6B35;color:#fff}
+  #btn-wipe{background:#2a2a2a;color:#f5f0e8;border:1px solid #444}
+  #btn-read{background:#1a3a1a;color:#4caf50;border:1px solid #4caf50}
+  #log{background:#111;border:1px solid #222;border-radius:8px;padding:20px;min-height:200px;white-space:pre-wrap;font-size:13px;line-height:1.7;margin-top:20px}
+  .ok{color:#4caf50}.err{color:#ff4444}.warn{color:#FFD23F}.dim{color:#555}
+</style>
+</head>
+<body>
+<h2>Grind Lab Challenge — Load Test</h2>
+<p>Seeds 25 fake users into Supabase and simulates concurrent leaderboard reads. No npm needed.</p>
+
+<button id="btn-seed" onclick="seed()">⚡ Seed 25 Users</button>
+<button id="btn-read" onclick="readOnly()">📊 Read Leaderboard</button>
+<button id="btn-wipe" onclick="wipe()">🗑 Wipe Test Users</button>
+
+<div id="log"><span class="dim">Click a button to start...</span></div>
+
+<script>
+const SB_URL = 'https://bqqoczbminqhknwbhslh.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxcW9jemJtaW5xaGtud2Joc2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNDA4NTYsImV4cCI6MjA5MDgxNjg1Nn0.-NBZEI_NXx3IsHXCyrPB3lLvJtWq0mzUsxnADzyu6pA';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+const NUM = 25;
+const PREFIX = 'loadtest_';
+const NAMES = ['IronMike','QueenD','ProteinKing','GrindQueen','BeastMode','SweatShop','LiftLord','CardioKing','PalmPower','GainZone','FuelUp','MuscleMax','CleanEater','RepsGod','NoBrakes','PumpCity','LeanMean','GrindHard','ProMax','NutriBeast','SwoleGoal','FlexFuel','CoreKing','PeakForm','IronWill'];
+
+const log = document.getElementById('log');
+function out(msg, cls=''){log.innerHTML += `<span class="${cls}">${msg}</span>\n`; log.scrollTop=log.scrollHeight;}
+function clear(){log.innerHTML='';}
+
+function emails(){ return Array.from({length:NUM},(_,i)=>`${PREFIX}user${String(i+1).padStart(2,'0')}@grindlab.test`); }
+function randPts(){ let t=0; for(let d=0;d<7;d++) t+=[0,0,0].filter(()=>Math.random()>.35).length*10; return t; }
+
+async function seed(){
+  clear();
+  out('⚡ Seeding '+NUM+' test users...','warn');
+  const now = new Date().toISOString();
+  const participants = [], leaderboard = [];
+  emails().forEach((email,i)=>{
+    const pts=randPts(), streak=Math.floor(Math.random()*8);
+    participants.push({email, nickname:NAMES[i], joined_at:now, last_active:now});
+    leaderboard.push({email, nickname:NAMES[i], points:pts, streak, updated_at:now});
+  });
+
+  let t = Date.now();
+  const {error:pErr} = await sb.from('glc_participants').upsert(participants,{onConflict:'email'});
+  if(pErr){ out('❌ Participants error: '+pErr.message,'err'); return; }
+  out(`✅ ${NUM} participants upserted  (${Date.now()-t}ms)`,'ok');
+
+  t = Date.now();
+  const {error:lErr} = await sb.from('glc_leaderboard').upsert(leaderboard,{onConflict:'email'});
+  if(lErr){ out('❌ Leaderboard error: '+lErr.message,'err'); return; }
+  out(`✅ ${NUM} leaderboard rows upserted  (${Date.now()-t}ms)`,'ok');
+
+  out('\n🔄 Simulating 10 concurrent leaderboard reads...','warn');
+  t = Date.now();
+  const reads = await Promise.all(Array.from({length:10},()=>Promise.all([
+    sb.from('glc_leaderboard').select('*').order('points',{ascending:false}),
+    sb.from('glc_participants').select('email')
+  ])));
+  out(`✅ 10 concurrent reads done  (${Date.now()-t}ms total, ~${Math.round((Date.now()-t)/10)}ms avg)`,'ok');
+
+  const [{data:lbData},{data:pData}] = reads[0];
+  const active = new Set(pData.map(p=>p.email));
+  const filtered = lbData.filter(r=>active.has(r.email)).sort((a,b)=>b.points-a.points);
+
+  out('\n📊 Top 10 of '+filtered.length+' users:\n','warn');
+  out('Rank  Nickname           Points  Streak','dim');
+  out('----  -----------------  ------  ------','dim');
+  filtered.slice(0,10).forEach((u,i)=>{
+    out(`#${String(i+1).padEnd(3)}  ${u.nickname.padEnd(17)}  ${String(u.points).padStart(6)}  🔥${u.streak}`);
+  });
+
+  const avg = Math.round(filtered.reduce((s,u)=>s+u.points,0)/filtered.length);
+  out(`\n📈 avg ${avg} pts | top ${filtered[0]?.points??0} pts | ${filtered.length} users`,'ok');
+  out('\n✅ Done! Open the app leaderboard to see them. Wipe when finished.','ok');
+}
+
+async function readOnly(){
+  clear();
+  out('📊 Reading leaderboard...','warn');
+  const t=Date.now();
+  const [{data:lbData,error:lbErr},{data:pData,error:pErr}] = await Promise.all([
+    sb.from('glc_leaderboard').select('*').order('points',{ascending:false}),
+    sb.from('glc_participants').select('email')
+  ]);
+  if(lbErr||pErr){ out('❌ '+(lbErr||pErr).message,'err'); return; }
+  out(`✅ Fetched in ${Date.now()-t}ms`,'ok');
+  const active=new Set(pData.map(p=>p.email));
+  const filtered=lbData.filter(r=>active.has(r.email));
+  out(`${filtered.length} active users on leaderboard\n`,'ok');
+  out('Rank  Nickname           Points  Streak','dim');
+  out('----  -----------------  ------  ------','dim');
+  filtered.slice(0,10).forEach((u,i)=>{ out(`#${String(i+1).padEnd(3)}  ${u.nickname.padEnd(17)}  ${String(u.points).padStart(6)}  🔥${u.streak}`); });
+  if(filtered.length>10) out(`     ... and ${filtered.length-10} more`,'dim');
+}
+
+async function wipe(){
+  if(!confirm('Remove all '+NUM+' test users?')) return;
+  clear();
+  out('🗑 Wiping test users...','warn');
+  const [r1,r2] = await Promise.all([
+    sb.from('glc_participants').delete().in('email',emails()),
+    sb.from('glc_leaderboard').delete().in('email',emails()),
+  ]);
+  if(r1.error) out('❌ Participants: '+r1.error.message,'err');
+  else out('✅ Test participants removed','ok');
+  if(r2.error) out('❌ Leaderboard: '+r2.error.message,'err');
+  else out('✅ Test leaderboard rows removed','ok');
+}
+</script>
+</body>
+</html>
