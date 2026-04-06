@@ -452,10 +452,10 @@ function getDayNum(){
   return Math.floor((new Date(today()) - new Date(start)) / 86400000) + 1;
 }
 
-function hadYesYesterday(){
+function hadPerfectDayYesterday(){
   const y = yesterday();
   const d = user.days.find(x => x.date === y);
-  return d && (d.breakfast===true || d.lunch===true || d.dinner===true);
+  return d && d.breakfast===true && d.lunch===true && d.dinner===true;
 }
 
 // === AUTH ===
@@ -740,12 +740,11 @@ function handleMeal(meal, answer, ev){
   const ptsDiff = day.points - prevDayPts;
   user.points = Math.max(0, user.points + ptsDiff);
 
-  // Streak: only update when going from no-yes to yes on today
-  if(answer === true && prevAnswer !== true && (viewingDate || today()) === today()){
-    const hadAnyYes = [day.breakfast,day.lunch,day.dinner].filter(x=>x===true).length === 1; // just became 1
-    if(hadAnyYes && user.lastCheckIn !== today()){
-      user.streak = (hadYesYesterday() || !user.lastCheckIn) ? (user.streak||0)+1 : 1;
-      if(!user.lastCheckIn) user.streak = 1;
+  // Streak: only increments when ALL 3 meals are YES (perfect day) on today
+  if(answer === true && (viewingDate || today()) === today()){
+    const allYes = day.breakfast===true && day.lunch===true && day.dinner===true;
+    if(allYes && user.lastCheckIn !== today()){
+      user.streak = (hadPerfectDayYesterday() || !user.lastCheckIn) ? (user.streak||0)+1 : 1;
       user.lastCheckIn = today();
     }
   }
@@ -899,7 +898,7 @@ async function renderLeaderboard(){
     // Filter leaderboard to only users who exist in participants table
     // This ensures wiped users disappear even if glc_leaderboard delete fails
     const [{ data: lbData }, { data: pData }] = await Promise.all([
-      sb.from('glc_leaderboard').select('*').order('points', { ascending: false }),
+      sb.from('glc_leaderboard').select('*').order('points', { ascending: false }).order('streak', { ascending: false }),
       sb.from('glc_participants').select('email')
     ]);
     if(lbData && pData !== null){
@@ -957,7 +956,8 @@ function cleanFakeDates(){
 
 function checkStreakReset(){
   if(!user.lastCheckIn || user.lastCheckIn===today()) return;
-  if(user.lastCheckIn !== yesterday() && !hadYesYesterday()){
+  // Streak requires a perfect day (all 3 YES) — reset if yesterday wasn't perfect
+  if(!hadPerfectDayYesterday()){
     user.streak = 0; saveUser();
   }
 }

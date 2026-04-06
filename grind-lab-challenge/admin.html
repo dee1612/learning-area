@@ -99,7 +99,7 @@ async function showDashboard(){
 async function loadStats(){
   const [{ count: pCount }, { data: lbData }, { data: pData }] = await Promise.all([
     sb.from('glc_participants').select('*', { count:'exact', head:true }),
-    sb.from('glc_leaderboard').select('email,nickname,points').order('points',{ascending:false}),
+    sb.from('glc_leaderboard').select('email,nickname,points,streak').order('points',{ascending:false}).order('streak',{ascending:false}),
     sb.from('glc_participants').select('email')
   ]);
   // Only consider users who are still active participants
