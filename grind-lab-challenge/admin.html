@@ -97,11 +97,14 @@ async function showDashboard(){
 }
 
 async function loadStats(){
-  const [{ count: pCount }, { data: lbData }] = await Promise.all([
+  const [{ count: pCount }, { data: lbData }, { data: pData }] = await Promise.all([
     sb.from('glc_participants').select('*', { count:'exact', head:true }),
-    sb.from('glc_leaderboard').select('nickname,points').order('points',{ascending:false}).limit(1)
+    sb.from('glc_leaderboard').select('email,nickname,points').order('points',{ascending:false}),
+    sb.from('glc_participants').select('email')
   ]);
-  const winner = lbData && lbData[0] ? lbData[0] : null;
+  // Only consider users who are still active participants
+  const activeEmails = new Set((pData||[]).map(p => p.email));
+  const winner = (lbData||[]).find(r => activeEmails.has(r.email)) || null;
   document.getElementById('stats').innerHTML =
     '<div class="stat"><div class="stat-val">'+(pCount||0)+'</div><div class="stat-lbl">Participants</div></div>' +
     '<div class="stat"><div class="stat-val" style="font-size:'+(winner?'22px':'36px')+';line-height:1.2">'+(winner ? winner.nickname : '—')+'</div>'+(winner?'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;color:var(--gold)">'+winner.points+' pts</div>':'')+'<div class="stat-lbl">Winner</div></div>';
