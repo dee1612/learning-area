@@ -99,12 +99,12 @@ async function showDashboard(){
 async function loadStats(){
   const [{ count: pCount }, { data: lbData }] = await Promise.all([
     sb.from('glc_participants').select('*', { count:'exact', head:true }),
-    sb.from('glc_leaderboard').select('points').order('points',{ascending:false}).limit(1)
+    sb.from('glc_leaderboard').select('nickname,points').order('points',{ascending:false}).limit(1)
   ]);
-  const topScore = lbData && lbData[0] ? lbData[0].points : 0;
+  const winner = lbData && lbData[0] ? lbData[0] : null;
   document.getElementById('stats').innerHTML =
     '<div class="stat"><div class="stat-val">'+(pCount||0)+'</div><div class="stat-lbl">Participants</div></div>' +
-    '<div class="stat"><div class="stat-val">'+topScore+'</div><div class="stat-lbl">Top Score</div></div>';
+    '<div class="stat"><div class="stat-val" style="font-size:'+(winner?'22px':'36px')+';line-height:1.2">'+(winner ? winner.nickname : '—')+'</div>'+(winner?'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;color:var(--gold)">'+winner.points+' pts</div>':'')+'<div class="stat-lbl">Winner</div></div>';
 }
 
 async function loadParticipants(){
@@ -118,12 +118,19 @@ async function loadParticipants(){
   const lbMap = {};
   (lb||[]).forEach(r => lbMap[r.email] = r);
   const body = document.getElementById('p-body');
-  data.forEach(p => {
+  // Sort by points descending
+  data.sort((a, b) => {
+    const ptsA = lbMap[a.email] ? lbMap[a.email].points : 0;
+    const ptsB = lbMap[b.email] ? lbMap[b.email].points : 0;
+    return ptsB - ptsA;
+  });
+  data.forEach((p, idx) => {
     const pts = lbMap[p.email] ? lbMap[p.email].points : 0;
     const streak = lbMap[p.email] ? lbMap[p.email].streak : 0;
+    const rank = idx === 0 && pts > 0 ? '🥇 ' : idx === 1 && pts > 0 ? '🥈 ' : idx === 2 && pts > 0 ? '🥉 ' : '';
     const tr = document.createElement('tr');
     tr.innerHTML =
-      '<td><div class="nick">'+p.nickname+'</div></td>' +
+      '<td><div class="nick">'+rank+p.nickname+'</div></td>' +
       '<td class="email">'+p.email+'</td>' +
       '<td class="time">'+fmt(p.joined_at)+'</td>' +
       '<td class="time">'+fmt(p.last_active)+'</td>' +
