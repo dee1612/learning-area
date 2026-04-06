@@ -18,8 +18,8 @@
       --text-primary:#F5F0E8;--text-secondary:#8A8A8A;
       --card-bg:#1A1A1A;--card-border:#2A2A2A;
     }
-    html,body{height:100%;background:var(--bg);color:var(--text-primary);font-family:'DM Sans',-apple-system,sans-serif;overflow:hidden;position:fixed;width:100%}
-    #app{position:fixed;inset:0;overflow:hidden}
+    html,body{height:100%;background:#060606;color:var(--text-primary);font-family:'DM Sans',-apple-system,sans-serif;overflow:hidden;position:fixed;width:100%}
+    #app{position:fixed;inset:0;overflow:hidden;max-width:480px;left:50%;transform:translateX(-50%);background:var(--bg)}
 
     /* SCREENS */
     .screen{
@@ -114,12 +114,19 @@
     .meal-card.no .card-status{display:block;color:#444}
     .card-undo{display:none;font-size:11px;color:var(--text-secondary);margin-top:8px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
     .meal-card.yes .card-undo,.meal-card.no .card-undo{display:block}
-    .day-nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-    .day-nav-row .day-counter{margin-bottom:0;flex:1;text-align:center}
-    .day-nav-btn{background:none;border:none;color:var(--text-primary);font-size:22px;padding:8px 14px;cursor:pointer;opacity:1;transition:opacity .15s;line-height:1}
-    .day-nav-btn:disabled{opacity:.2;cursor:not-allowed}
-    .day-nav-btn:not(:disabled):active{opacity:.5}
-    .day-counter{font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:.1em;text-transform:uppercase;margin-bottom:20px}
+    .day-counter{font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;text-align:center}
+    .day-dots{display:flex;gap:6px;justify-content:center;margin-bottom:20px}
+    .day-dot{
+      width:36px;height:36px;border-radius:50%;border:2px solid #2a2a2a;
+      background:#161616;color:#444;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      font-family:'Bebas Neue',sans-serif;font-size:14px;
+      transition:all .2s;flex-shrink:0;
+    }
+    .day-dot.done{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 10px rgba(255,107,53,.4)}
+    .day-dot.active{border-color:var(--accent);color:var(--accent);background:transparent}
+    .day-dot.active.done{background:var(--accent);color:#fff;box-shadow:0 0 14px rgba(255,107,53,.6);transform:scale(1.1)}
+    .day-dot.future{opacity:.25;cursor:not-allowed}
     .btn-yes{
       display:block;width:100%;padding:15px;
       background:var(--accent);color:#fff;
@@ -199,7 +206,7 @@
 
     /* BOTTOM NAV */
     #bottom-nav{
-      position:fixed;bottom:0;left:0;right:0;height:72px;
+      position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:72px;
       background:rgba(22,22,22,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
       border-top:1px solid var(--card-border);
       display:none;align-items:center;justify-content:space-around;
@@ -292,11 +299,8 @@
   <div id="screen-today" class="screen">
     <div class="today-top">
       <div class="greeting" id="greeting">Hey there &#128075;</div>
-      <div class="day-nav-row">
-        <button class="day-nav-btn" id="btn-day-prev" onclick="navDay(-1)" disabled>&#8592;</button>
-        <div class="day-counter" id="day-counter"></div>
-        <button class="day-nav-btn" id="btn-day-next" onclick="navDay(1)" disabled>&#8594;</button>
-      </div>
+      <div class="day-counter" id="day-counter"></div>
+      <div class="day-dots" id="day-dots"></div>
       <div id="streak-area"></div>
     </div>
     <div class="meals" id="meals"></div>
@@ -498,17 +502,8 @@ function doSignup(){
 }
 
 // === NAVIGATION ===
-function navDay(dir){
-  const todayStr = today();
-  const cur = viewingDate || todayStr;
-  const d = new Date(cur);
-  d.setDate(d.getDate() + dir);
-  const next = d.toISOString().split('T')[0];
-  // Clamp: don't go before day 1, don't go past today
-  const sorted = [...user.days].sort((a,b)=>a.date.localeCompare(b.date));
-  const startDate = sorted.length > 0 ? sorted[0].date : todayStr;
-  if(next < startDate || next > todayStr) return;
-  viewingDate = next;
+function goToDay(dateStr){
+  viewingDate = dateStr;
   renderToday();
 }
 
@@ -575,42 +570,45 @@ function goTab(tab, idx){
 function renderToday(){
   const users = getUsers();
   user = users[user.email] || user;
-  if(!viewingDate) viewingDate = today();
+  const todayStr = today();
+  if(!viewingDate) viewingDate = todayStr;
   document.getElementById('greeting').textContent = 'Hey ' + user.nickname + ' \uD83D\uDC4B';
 
-  // Day counter + nav buttons
+  // actualDayNum from getDayNum() (respects ?day=N override for testing)
   const actualDayNum = getDayNum();
-  const todayStr = today();
+  const isViewingToday = viewingDate === todayStr;
 
-  // In test mode (?day=N), use a fake date so real logged data doesn't bleed through
-  const testOverride = new URLSearchParams(window.location.search).get('day');
-  if(testOverride){
-    const fakeBase = new Date('2000-01-01');
-    fakeBase.setDate(fakeBase.getDate() + actualDayNum - 1);
-    viewingDate = fakeBase.toISOString().split('T')[0];
-  }
-  const isViewingToday = testOverride ? true : (viewingDate === todayStr);
-
-  // Calculate viewed day number from start
-  const sorted = [...user.days].sort((a,b)=>a.date.localeCompare(b.date));
+  // Start date = user's first real day
+  const realDays = user.days.filter(d => d.date >= '2025-01-01');
+  const sorted = [...realDays].sort((a,b)=>a.date.localeCompare(b.date));
   const startDate = sorted.length > 0 ? sorted[0].date : todayStr;
-  const viewedDayNum = Math.floor((new Date(viewingDate) - new Date(startDate)) / 86400000) + 1;
-  const dcEl = document.getElementById('day-counter');
-  if(isViewingToday){
-    if(dcEl) dcEl.textContent = 'DAY ' + Math.min(actualDayNum, 7) + ' OF 7';
-  } else {
-    if(dcEl) dcEl.textContent = 'DAY ' + Math.max(1, viewedDayNum) + ' \u2022 PAST';
-  }
 
-  // Prev/next nav buttons — hide in test mode
-  const btnPrev = document.getElementById('btn-day-prev');
-  const btnNext = document.getElementById('btn-day-next');
-  if(testOverride){
-    if(btnPrev) btnPrev.style.visibility = 'hidden';
-    if(btnNext) btnNext.style.visibility = 'hidden';
-  } else {
-    if(btnPrev){ btnPrev.style.visibility=''; btnPrev.disabled = viewingDate <= startDate; }
-    if(btnNext){ btnNext.style.visibility=''; btnNext.disabled = isViewingToday; }
+  // Current viewed day number (1-based from startDate)
+  const viewedDayNum = Math.floor((new Date(viewingDate) - new Date(startDate)) / 86400000) + 1;
+  const displayDayNum = isViewingToday ? Math.min(actualDayNum, 7) : Math.max(1, Math.min(7, viewedDayNum));
+
+  // Day counter
+  const dcEl = document.getElementById('day-counter');
+  if(dcEl) dcEl.textContent = 'DAY ' + displayDayNum + ' OF 7';
+
+  // 7 dots
+  const dotsEl = document.getElementById('day-dots');
+  if(dotsEl){
+    dotsEl.innerHTML = '';
+    for(let i = 1; i <= 7; i++){
+      const dotDate = new Date(startDate);
+      dotDate.setDate(dotDate.getDate() + i - 1);
+      const dotDateStr = dotDate.toISOString().split('T')[0];
+      const isFuture = dotDateStr > todayStr;
+      const dayData = user.days.find(x => x.date === dotDateStr);
+      const isDone = dayData && (dayData.breakfast !== null || dayData.lunch !== null || dayData.dinner !== null);
+      const isCurrentView = dotDateStr === viewingDate;
+      const dot = document.createElement('div');
+      dot.className = 'day-dot' + (isDone ? ' done' : '') + (isCurrentView ? ' active' : '') + (isFuture ? ' future' : '');
+      dot.textContent = i;
+      if(!isFuture) dot.onclick = () => goToDay(dotDateStr);
+      dotsEl.appendChild(dot);
+    }
   }
 
   // streak
@@ -849,18 +847,22 @@ function paintLB(lb){
 }
 
 async function renderLeaderboard(){
-  // Show local cache instantly
-  const cached = getLB();
-  if(cached.length) paintLB(cached);
-  else document.getElementById('podium').innerHTML = '<div class="lb-empty">Loading... \u23F3</div>';
-  // Fetch from Supabase
+  document.getElementById('podium').innerHTML = '<div class="lb-empty">Loading... \u23F3</div>';
+  document.getElementById('lb-list').innerHTML = '';
   try{
-    const { data, error } = await sb.from('glc_leaderboard').select('*').order('points', { ascending: false });
-    if(data && data.length){
-      saveLB(data);
+    const { data } = await sb.from('glc_leaderboard').select('*').order('points', { ascending: false });
+    if(data){
+      saveLB(data); // replace cache — deleted users gone
       paintLB(data);
+    } else {
+      // fallback to local cache
+      const cached = getLB();
+      if(cached.length) paintLB(cached);
     }
-  }catch(e){}
+  }catch(e){
+    const cached = getLB();
+    if(cached.length) paintLB(cached);
+  }
 }
 
 // === RENDER ME ===
