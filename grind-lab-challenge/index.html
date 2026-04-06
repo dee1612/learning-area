@@ -117,16 +117,18 @@
     .day-counter{font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;text-align:center}
     .day-dots{display:flex;gap:6px;justify-content:center;margin-bottom:20px}
     .day-dot{
-      width:36px;height:36px;border-radius:50%;border:2px solid #2a2a2a;
+      width:40px;height:40px;border-radius:50%;border:2px solid #2a2a2a;
       background:#161616;color:#444;cursor:pointer;
       display:flex;align-items:center;justify-content:center;
-      font-family:'Bebas Neue',sans-serif;font-size:14px;
+      font-family:'Bebas Neue',sans-serif;font-size:15px;
       transition:all .2s;flex-shrink:0;
+      touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,107,53,.2);
+      user-select:none;
     }
     .day-dot.done{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 10px rgba(255,107,53,.4)}
-    .day-dot.active{border-color:var(--accent);color:var(--accent);background:transparent}
-    .day-dot.active.done{background:var(--accent);color:#fff;box-shadow:0 0 14px rgba(255,107,53,.6);transform:scale(1.1)}
-    .day-dot.future{opacity:.25;cursor:not-allowed}
+    .day-dot.active{border-color:var(--accent);color:var(--accent);background:rgba(255,107,53,.08)}
+    .day-dot.active.done{background:var(--accent);color:#fff;box-shadow:0 0 14px rgba(255,107,53,.6);transform:scale(1.12)}
+    .day-dot.future{opacity:.2;cursor:not-allowed;pointer-events:none}
     .btn-yes{
       display:block;width:100%;padding:15px;
       background:var(--accent);color:#fff;
@@ -143,6 +145,20 @@
       border:1px solid #2a2a2a;border-radius:50px;cursor:pointer;
     }
     .pts-total{text-align:center;font-size:13px;color:var(--text-secondary);padding-bottom:8px}
+    .btn-fb{
+      display:block;width:100%;padding:13px;margin:12px 0 4px;
+      background:#1877F2;color:#fff;border:none;border-radius:50px;
+      font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;
+      cursor:pointer;touch-action:manipulation;
+      box-shadow:0 4px 14px rgba(24,119,242,.35);
+    }
+    .fb-toast{
+      position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+      background:#1877F2;color:#fff;padding:10px 20px;border-radius:24px;
+      font-size:13px;font-weight:600;z-index:9999;
+      animation:fade-up .3s ease,toast-fade 2.5s ease forwards;
+    }
+    @keyframes toast-fade{0%,70%{opacity:1}100%{opacity:0}}
     .pts-total span{color:var(--gold);font-weight:700}
 
     /* FLOAT ANIMATION */
@@ -305,6 +321,7 @@
     </div>
     <div class="meals" id="meals"></div>
     <div class="pts-total" id="pts-total"></div>
+    <button id="fb-share-btn" class="btn-fb" style="display:none" onclick="shareToFacebook()">&#128278; Share to Facebook Group</button>
     <button id="final-results-btn" class="btn-cta" style="display:none;margin:20px 0 8px;width:100%;font-size:20px;letter-spacing:.08em" onclick="showWinnerOverlay()">&#127942; FINAL RESULTS</button>
   </div>
 
@@ -643,6 +660,13 @@ function renderToday(){
 
   updatePtsDisplay();
 
+  // Show FB share button if any meal is answered on today's view
+  const fbBtn = document.getElementById('fb-share-btn');
+  if(fbBtn){
+    const anyAnswered = day.breakfast !== null || day.lunch !== null || day.dinner !== null;
+    fbBtn.style.display = (isViewingToday && anyAnswered) ? 'block' : 'none';
+  }
+
   // Day 7: show FINAL RESULTS button when all meals answered
   const finalBtn = document.getElementById('final-results-btn');
   if(finalBtn){
@@ -697,29 +721,31 @@ function handleMeal(meal, answer, ev){
   if(answer) haptic([30, 20, 60]); else haptic(20);
 
   const day = getDayData();
-  const firstYes = answer===true && [day.breakfast,day.lunch,day.dinner].filter(x=>x===true).length===0;
-
+  const prevAnswer = day[meal];
   day[meal] = answer;
 
-  if(answer === true){
-    day.points = (day.points||0) + 10;
-    user.points += 10;
+  // Recalculate day points from scratch (10 per YES) — no double-counting
+  const prevDayPts = day.points || 0;
+  day.points = [day.breakfast, day.lunch, day.dinner].filter(x => x === true).length * 10;
+  const ptsDiff = day.points - prevDayPts;
+  user.points = Math.max(0, user.points + ptsDiff);
 
-    if(firstYes && user.lastCheckIn !== today()){
-      if(!user.lastCheckIn || user.lastCheckIn !== yesterday()){
-        user.streak = (hadYesYesterday() || !user.lastCheckIn) ? (user.streak||0)+1 : 1;
-        if(!user.lastCheckIn) user.streak = 1;
-      } else {
-        user.streak++;
-      }
+  // Streak: only update when going from no-yes to yes on today
+  if(answer === true && prevAnswer !== true && (viewingDate || today()) === today()){
+    const hadAnyYes = [day.breakfast,day.lunch,day.dinner].filter(x=>x===true).length === 1; // just became 1
+    if(hadAnyYes && user.lastCheckIn !== today()){
+      user.streak = (hadYesYesterday() || !user.lastCheckIn) ? (user.streak||0)+1 : 1;
+      if(!user.lastCheckIn) user.streak = 1;
       user.lastCheckIn = today();
     }
+  }
 
-    // Float +10
+  if(ptsDiff > 0){
+    // Float +N
     const rect = btn.getBoundingClientRect();
     const fp = document.createElement('div');
     fp.className = 'float-pts';
-    fp.textContent = '+10';
+    fp.textContent = '+' + ptsDiff;
     fp.style.left = (rect.left + rect.width/2 - 18) + 'px';
     fp.style.top = rect.top + 'px';
     document.body.appendChild(fp);
@@ -755,6 +781,9 @@ function handleMeal(meal, answer, ev){
     updatePtsDisplay();
     const d = getDayData(viewingDate || today());
     if(d.breakfast===true && d.lunch===true && d.dinner===true) triggerPerfectDay();
+    // FB share button
+    const fbBtn = document.getElementById('fb-share-btn');
+    if(fbBtn){ const any = d.breakfast!==null||d.lunch!==null||d.dinner!==null; fbBtn.style.display=any?'block':'none'; }
     // Show FINAL RESULTS button on day 7 once all meals answered
     const finalBtn = document.getElementById('final-results-btn');
     if(finalBtn){
@@ -926,6 +955,33 @@ async function showWinnerOverlay(){
   }catch(e){}
   ov.classList.add('show');
   startConfetti();
+}
+
+function shareToFacebook(){
+  const day = getDayData(viewingDate || today());
+  const actualDayNum = getDayNum();
+  const yesCount = [day.breakfast, day.lunch, day.dinner].filter(x => x === true).length;
+  const meals = ['breakfast','lunch','dinner'].filter(m => day[m] === true).map(m => m.charAt(0).toUpperCase()+m.slice(1));
+  let msg;
+  if(yesCount === 3){
+    msg = 'PERFECT DAY! 🔥 Day ' + actualDayNum + ' of the Grind Lab 7-Day Protein Challenge — hit protein at every meal. Breakfast, lunch & dinner. LET\'S GO! 💪 Who else is crushing it? Drop your check-in below! 👇 #GrindLabChallenge';
+  } else if(yesCount > 0){
+    msg = 'Day ' + actualDayNum + ' check-in ✅ Hit my protein at ' + meals.join(' & ') + ' today in the Grind Lab Challenge! Still going strong 💪 How\'s everyone else doing? #GrindLabChallenge';
+  } else {
+    msg = 'Day ' + actualDayNum + ' of the Grind Lab 7-Day Protein Challenge 💪 Still showing up! Who else is in? #GrindLabChallenge';
+  }
+  const fbGroupUrl = 'https://www.facebook.com/groups/4378612459123843';
+  // Copy message to clipboard then open FB group
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(msg).then(() => {
+      const toast = document.createElement('div');
+      toast.className = 'fb-toast';
+      toast.textContent = '✓ Message copied! Paste it in the group 👆';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2800);
+    }).catch(() => {});
+  }
+  window.open(fbGroupUrl, '_blank');
 }
 
 function dismissWinner(){
