@@ -31,9 +31,11 @@ const SB_URL = 'https://bqqoczbminqhknwbhslh.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxcW9jemJtaW5xaGtud2Joc2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNDA4NTYsImV4cCI6MjA5MDgxNjg1Nn0.-NBZEI_NXx3IsHXCyrPB3lLvJtWq0mzUsxnADzyu6pA';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
-const NUM = 25;
+const NUM = 100;
 const PREFIX = 'loadtest_';
-const NAMES = ['IronMike','QueenD','ProteinKing','GrindQueen','BeastMode','SweatShop','LiftLord','CardioKing','PalmPower','GainZone','FuelUp','MuscleMax','CleanEater','RepsGod','NoBrakes','PumpCity','LeanMean','GrindHard','ProMax','NutriBeast','SwoleGoal','FlexFuel','CoreKing','PeakForm','IronWill'];
+const FIRST = ['Iron','Grind','Pump','Beast','Lean','Peak','Raw','Core','Apex','Fuel','Sweat','Lift','Flex','Burn','Swole','Primal','Reps','Palm','Gain','Clean'];
+const LAST = ['Mike','Queen','King','Lord','Max','Mode','Power','Zone','City','Hard','Goal','Fuel','Beast','Form','Grind','Fit','God','Brakes','Brute','Force'];
+const NAMES = Array.from({length:100},(_,i)=>FIRST[i%FIRST.length]+LAST[Math.floor(i/FIRST.length)%LAST.length]+(i>=FIRST.length*LAST.length?i:''));
 
 const log = document.getElementById('log');
 function out(msg, cls=''){log.innerHTML += `<span class="${cls}">${msg}</span>\n`; log.scrollTop=log.scrollHeight;}
