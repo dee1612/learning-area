@@ -414,12 +414,16 @@ function yesterday(){
 }
 
 function syncLB(){
-  // Only write to Supabase — local cache is managed entirely by renderLeaderboard()
-  // This prevents deleted users from being re-added to local cache
   sb.from('glc_leaderboard').upsert(
     { email: user.email, nickname: user.nickname, points: user.points, streak: user.streak, updated_at: new Date().toISOString() },
     { onConflict: 'email' }
   ).then(()=>{}).catch(()=>{});
+}
+
+function syncDays(){
+  // Persist day selections to Supabase so they survive localStorage clear / new device login
+  sb.from('glc_participants').update({ days_json: user.days, last_active: new Date().toISOString() })
+    .eq('email', user.email).then(()=>{}).catch(()=>{});
 }
 
 function saveUser(){
@@ -427,6 +431,7 @@ function saveUser(){
   users[user.email] = user;
   saveUsers(users);
   syncLB();
+  syncDays();
 }
 
 function getDayData(date){
@@ -477,13 +482,14 @@ async function checkEmail(){
       sb.from('glc_leaderboard').select('*').eq('email', email).maybeSingle()
     ]);
     if(pData){
-      // Known user — restore and log in
+      // Known user — restore and log in (days_json restores meal selections from any device)
       err.textContent='';
       user = {
         nickname: pData.nickname, email,
         points: lbData ? lbData.points : 0,
         streak: lbData ? lbData.streak : 0,
-        lastCheckIn: null, days: []
+        lastCheckIn: null,
+        days: Array.isArray(pData.days_json) ? pData.days_json : []
       };
       saveUser();
       localStorage.setItem(CUR_KEY, email);
