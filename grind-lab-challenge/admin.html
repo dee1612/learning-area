@@ -173,13 +173,20 @@ async function wipeAll(){
   const el = document.getElementById('participants-table');
   el.innerHTML = '<div class="loading">Wiping all data...</div>';
   try{
-    await Promise.all([
+    const results = await Promise.all([
       sb.from('glc_participants').delete().neq('email','__none__'),
       sb.from('glc_leaderboard').delete().neq('email','__none__'),
       sb.from('glc_coaching_interest').delete().neq('email','__none__'),
     ]);
-    el.innerHTML = '<div class="empty">All data wiped. ✓</div>';
-    loadStats();
+    const errs = results.filter(r => r.error).map(r => r.error.message);
+    if(errs.length){ alert('Wipe error: ' + errs.join(', ')); loadParticipants(); return; }
+    // Clear local leaderboard cache and participant data so the app starts fresh
+    localStorage.removeItem('glc_lb_v2');
+    localStorage.removeItem('glc_users_v2');
+    localStorage.removeItem('glc_cur_v2');
+    el.innerHTML = '<div class="empty">All data wiped. ✓ Please re-login to the challenge app.</div>';
+    document.getElementById('p-count').textContent = '0';
+    await loadStats();
   }catch(e){ alert('Wipe failed: '+e.message); loadParticipants(); }
 }
 

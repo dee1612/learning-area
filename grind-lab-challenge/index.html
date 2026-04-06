@@ -129,7 +129,7 @@
     .day-dot.done{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 10px rgba(255,107,53,.4)}
     .day-dot.active{border-color:var(--accent);color:var(--accent);background:rgba(255,107,53,.08)}
     .day-dot.active.done{background:var(--accent);color:#fff;box-shadow:0 0 14px rgba(255,107,53,.6);transform:scale(1.12)}
-    .day-dot.future{opacity:.2;cursor:not-allowed;pointer-events:none}
+    .day-dot.future{opacity:.35}
     .btn-yes{
       display:block;width:100%;padding:15px;
       background:var(--accent);color:#fff;
@@ -585,25 +585,23 @@ function renderDots(startDate, todayStr){
   if(!dotsEl) return;
   const vd = viewingDate || todayStr;
   dotsEl.innerHTML = '';
-  let futureDots = 0;
   for(let i = 1; i <= 7; i++){
     const dotDate = new Date(startDate);
     dotDate.setDate(dotDate.getDate() + i - 1);
     const dotDateStr = dotDate.toISOString().split('T')[0];
     const isFuture = dotDateStr > todayStr;
-    if(isFuture) futureDots++;
     const dayData = user.days.find(x => x.date === dotDateStr);
     const isDone = dayData && (dayData.breakfast !== null || dayData.lunch !== null || dayData.dinner !== null);
     const isCurrentView = dotDateStr === vd;
     const dot = document.createElement('div');
     dot.className = 'day-dot' + (isDone ? ' done' : '') + (isCurrentView ? ' active' : '') + (isFuture ? ' future' : '');
     dot.textContent = i;
-    if(!isFuture) dot.onclick = () => goToDay(dotDateStr);
+    dot.onclick = () => goToDay(dotDateStr);
     dotsEl.appendChild(dot);
   }
   // Hint text
   const hint = document.getElementById('day-dots-hint');
-  if(hint) hint.textContent = futureDots > 0 ? 'Tap past days to review · Future days unlock as you progress' : 'Tap any day to review your answers';
+  if(hint) hint.textContent = 'Tap any day to log or review your meals';
 }
 
 // === RENDER TODAY ===
@@ -970,22 +968,8 @@ async function showWinnerOverlay(){
 }
 
 function shareToFacebook(){
-  const day = getDayData(viewingDate || today());
-  const actualDayNum = getDayNum();
-  const yesCount = [day.breakfast, day.lunch, day.dinner].filter(x => x === true).length;
-  const meals = ['breakfast','lunch','dinner'].filter(m => day[m] === true).map(m => m.charAt(0).toUpperCase()+m.slice(1));
-  let msg;
-  if(yesCount === 3){
-    msg = 'PERFECT DAY! 🔥 Day ' + actualDayNum + ' of the Grind Lab 7-Day Protein Challenge — hit protein at every meal. Breakfast, lunch & dinner. LET\'S GO! 💪 Who else is crushing it? #GrindLabChallenge';
-  } else if(yesCount > 0){
-    msg = 'Day ' + actualDayNum + ' check-in ✅ Hit my protein at ' + meals.join(' & ') + ' in the Grind Lab Challenge! Still going strong 💪 How\'s everyone else doing? #GrindLabChallenge';
-  } else {
-    msg = 'Day ' + actualDayNum + ' of the Grind Lab 7-Day Protein Challenge — still showing up! 💪 Who else is in? #GrindLabChallenge';
-  }
-  // Open FB sharer with message pre-filled — user just taps Post
-  const appUrl = 'https://learning-area-iota.vercel.app/challenge.html';
-  const shareUrl = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(appUrl) + '&quote=' + encodeURIComponent(msg);
-  window.open(shareUrl, '_blank', 'width=600,height=500');
+  // Open the Facebook group directly
+  window.open('https://www.facebook.com/groups/4378612459123843', '_blank');
 }
 
 function dismissWinner(){
