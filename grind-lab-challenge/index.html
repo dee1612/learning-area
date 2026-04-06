@@ -412,14 +412,8 @@ function yesterday(){
 }
 
 function syncLB(){
-  // Local cache
-  let lb = getLB();
-  const idx = lb.findIndex(u2 => u2.email === user.email);
-  const entry = { nickname: user.nickname, email: user.email, points: user.points, streak: user.streak };
-  if(idx >= 0) lb[idx] = entry; else lb.push(entry);
-  lb.sort((a,b) => b.points - a.points);
-  saveLB(lb);
-  // Supabase — fire and forget
+  // Only write to Supabase — local cache is managed entirely by renderLeaderboard()
+  // This prevents deleted users from being re-added to local cache
   sb.from('glc_leaderboard').upsert(
     { email: user.email, nickname: user.nickname, points: user.points, streak: user.streak, updated_at: new Date().toISOString() },
     { onConflict: 'email' }
@@ -583,6 +577,28 @@ function goTab(tab, idx){
   else renderMe();
 }
 
+// === DAY DOTS ===
+function renderDots(startDate, todayStr){
+  const dotsEl = document.getElementById('day-dots');
+  if(!dotsEl) return;
+  const vd = viewingDate || todayStr;
+  dotsEl.innerHTML = '';
+  for(let i = 1; i <= 7; i++){
+    const dotDate = new Date(startDate);
+    dotDate.setDate(dotDate.getDate() + i - 1);
+    const dotDateStr = dotDate.toISOString().split('T')[0];
+    const isFuture = dotDateStr > todayStr;
+    const dayData = user.days.find(x => x.date === dotDateStr);
+    const isDone = dayData && (dayData.breakfast !== null || dayData.lunch !== null || dayData.dinner !== null);
+    const isCurrentView = dotDateStr === vd;
+    const dot = document.createElement('div');
+    dot.className = 'day-dot' + (isDone ? ' done' : '') + (isCurrentView ? ' active' : '') + (isFuture ? ' future' : '');
+    dot.textContent = i;
+    if(!isFuture) dot.onclick = () => goToDay(dotDateStr);
+    dotsEl.appendChild(dot);
+  }
+}
+
 // === RENDER TODAY ===
 function renderToday(){
   const users = getUsers();
@@ -609,24 +625,7 @@ function renderToday(){
   if(dcEl) dcEl.textContent = 'DAY ' + displayDayNum + ' OF 7';
 
   // 7 dots
-  const dotsEl = document.getElementById('day-dots');
-  if(dotsEl){
-    dotsEl.innerHTML = '';
-    for(let i = 1; i <= 7; i++){
-      const dotDate = new Date(startDate);
-      dotDate.setDate(dotDate.getDate() + i - 1);
-      const dotDateStr = dotDate.toISOString().split('T')[0];
-      const isFuture = dotDateStr > todayStr;
-      const dayData = user.days.find(x => x.date === dotDateStr);
-      const isDone = dayData && (dayData.breakfast !== null || dayData.lunch !== null || dayData.dinner !== null);
-      const isCurrentView = dotDateStr === viewingDate;
-      const dot = document.createElement('div');
-      dot.className = 'day-dot' + (isDone ? ' done' : '') + (isCurrentView ? ' active' : '') + (isFuture ? ' future' : '');
-      dot.textContent = i;
-      if(!isFuture) dot.onclick = () => goToDay(dotDateStr);
-      dotsEl.appendChild(dot);
-    }
-  }
+  renderDots(startDate, todayStr);
 
   // streak
   const sa = document.getElementById('streak-area');
@@ -790,6 +789,12 @@ function handleMeal(meal, answer, ev){
       const allAnswered = d.breakfast !== null && d.lunch !== null && d.dinner !== null;
       finalBtn.style.display = (getDayNum() >= 7 && allAnswered) ? 'block' : 'none';
     }
+    // Re-render dots so completed days light up immediately
+    const todayStr2 = today();
+    const realDays2 = user.days.filter(x => x.date >= '2025-01-01');
+    const sorted2 = [...realDays2].sort((a,b)=>a.date.localeCompare(b.date));
+    const startDate2 = sorted2.length > 0 ? sorted2[0].date : todayStr2;
+    renderDots(startDate2, todayStr2);
   }, 350);
 }
 
