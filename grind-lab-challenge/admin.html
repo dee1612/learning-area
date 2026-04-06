@@ -56,7 +56,10 @@ tr:hover td{background:#1c1c1c}
   <div class="stat-row" id="stats"></div>
 
   <div class="section">
-    <div class="section-title">Participants <span class="badge" id="p-count">0</span></div>
+    <div class="section-title" style="justify-content:space-between">
+      <span>Participants <span class="badge" id="p-count">0</span></span>
+      <button class="del-btn" style="font-size:13px;padding:8px 18px;border-color:#3a0a0a;color:#ff4444" onclick="wipeAll()">⚠️ Wipe All Data</button>
+    </div>
     <div id="participants-table"><div class="loading">Loading...</div></div>
   </div>
 
@@ -151,13 +154,33 @@ async function deleteUser(email, btn){
   if(!confirm('Delete '+email+'? This removes them from all tables.')) return;
   btn.textContent='Deleting...';
   btn.disabled=true;
-  await Promise.all([
-    sb.from('glc_participants').delete().eq('email',email),
-    sb.from('glc_leaderboard').delete().eq('email',email),
-    sb.from('glc_coaching_interest').delete().eq('email',email),
-  ]);
-  btn.closest('tr').remove();
-  loadStats();
+  try{
+    const results = await Promise.all([
+      sb.from('glc_participants').delete().eq('email',email),
+      sb.from('glc_leaderboard').delete().eq('email',email),
+      sb.from('glc_coaching_interest').delete().eq('email',email),
+    ]);
+    const errs = results.filter(r => r.error).map(r => r.error.message);
+    if(errs.length){ alert('Delete error: ' + errs.join(', ')); btn.textContent='Error'; return; }
+    btn.closest('tr').remove();
+    loadStats();
+  }catch(e){ alert('Delete failed: '+e.message); btn.textContent='Failed'; btn.disabled=false; }
+}
+
+async function wipeAll(){
+  if(!confirm('⚠️ This will permanently delete ALL participants and leaderboard data. Cannot be undone. Continue?')) return;
+  if(!confirm('Are you absolutely sure? This clears everything.')) return;
+  const el = document.getElementById('participants-table');
+  el.innerHTML = '<div class="loading">Wiping all data...</div>';
+  try{
+    await Promise.all([
+      sb.from('glc_participants').delete().neq('email','__none__'),
+      sb.from('glc_leaderboard').delete().neq('email','__none__'),
+      sb.from('glc_coaching_interest').delete().neq('email','__none__'),
+    ]);
+    el.innerHTML = '<div class="empty">All data wiped. ✓</div>';
+    loadStats();
+  }catch(e){ alert('Wipe failed: '+e.message); loadParticipants(); }
 }
 
 // Auto-login if session active

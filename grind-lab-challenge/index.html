@@ -115,6 +115,7 @@
     .card-undo{display:none;font-size:11px;color:var(--text-secondary);margin-top:8px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
     .meal-card.yes .card-undo,.meal-card.no .card-undo{display:block}
     .day-counter{font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;text-align:center}
+    .day-dots-hint{font-size:11px;color:#444;text-align:center;margin-top:-14px;margin-bottom:16px}
     .day-dots{display:flex;gap:6px;justify-content:center;margin-bottom:20px}
     .day-dot{
       width:40px;height:40px;border-radius:50%;border:2px solid #2a2a2a;
@@ -317,6 +318,7 @@
       <div class="greeting" id="greeting">Hey there &#128075;</div>
       <div class="day-counter" id="day-counter"></div>
       <div class="day-dots" id="day-dots"></div>
+      <div class="day-dots-hint" id="day-dots-hint"></div>
       <div id="streak-area"></div>
     </div>
     <div class="meals" id="meals"></div>
@@ -583,11 +585,13 @@ function renderDots(startDate, todayStr){
   if(!dotsEl) return;
   const vd = viewingDate || todayStr;
   dotsEl.innerHTML = '';
+  let futureDots = 0;
   for(let i = 1; i <= 7; i++){
     const dotDate = new Date(startDate);
     dotDate.setDate(dotDate.getDate() + i - 1);
     const dotDateStr = dotDate.toISOString().split('T')[0];
     const isFuture = dotDateStr > todayStr;
+    if(isFuture) futureDots++;
     const dayData = user.days.find(x => x.date === dotDateStr);
     const isDone = dayData && (dayData.breakfast !== null || dayData.lunch !== null || dayData.dinner !== null);
     const isCurrentView = dotDateStr === vd;
@@ -597,6 +601,9 @@ function renderDots(startDate, todayStr){
     if(!isFuture) dot.onclick = () => goToDay(dotDateStr);
     dotsEl.appendChild(dot);
   }
+  // Hint text
+  const hint = document.getElementById('day-dots-hint');
+  if(hint) hint.textContent = futureDots > 0 ? 'Tap past days to review · Future days unlock as you progress' : 'Tap any day to review your answers';
 }
 
 // === RENDER TODAY ===
@@ -969,24 +976,16 @@ function shareToFacebook(){
   const meals = ['breakfast','lunch','dinner'].filter(m => day[m] === true).map(m => m.charAt(0).toUpperCase()+m.slice(1));
   let msg;
   if(yesCount === 3){
-    msg = 'PERFECT DAY! 🔥 Day ' + actualDayNum + ' of the Grind Lab 7-Day Protein Challenge — hit protein at every meal. Breakfast, lunch & dinner. LET\'S GO! 💪 Who else is crushing it? Drop your check-in below! 👇 #GrindLabChallenge';
+    msg = 'PERFECT DAY! 🔥 Day ' + actualDayNum + ' of the Grind Lab 7-Day Protein Challenge — hit protein at every meal. Breakfast, lunch & dinner. LET\'S GO! 💪 Who else is crushing it? #GrindLabChallenge';
   } else if(yesCount > 0){
-    msg = 'Day ' + actualDayNum + ' check-in ✅ Hit my protein at ' + meals.join(' & ') + ' today in the Grind Lab Challenge! Still going strong 💪 How\'s everyone else doing? #GrindLabChallenge';
+    msg = 'Day ' + actualDayNum + ' check-in ✅ Hit my protein at ' + meals.join(' & ') + ' in the Grind Lab Challenge! Still going strong 💪 How\'s everyone else doing? #GrindLabChallenge';
   } else {
-    msg = 'Day ' + actualDayNum + ' of the Grind Lab 7-Day Protein Challenge 💪 Still showing up! Who else is in? #GrindLabChallenge';
+    msg = 'Day ' + actualDayNum + ' of the Grind Lab 7-Day Protein Challenge — still showing up! 💪 Who else is in? #GrindLabChallenge';
   }
-  const fbGroupUrl = 'https://www.facebook.com/groups/4378612459123843';
-  // Copy message to clipboard then open FB group
-  if(navigator.clipboard){
-    navigator.clipboard.writeText(msg).then(() => {
-      const toast = document.createElement('div');
-      toast.className = 'fb-toast';
-      toast.textContent = '✓ Message copied! Paste it in the group 👆';
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 2800);
-    }).catch(() => {});
-  }
-  window.open(fbGroupUrl, '_blank');
+  // Open FB sharer with message pre-filled — user just taps Post
+  const appUrl = 'https://learning-area-iota.vercel.app/challenge.html';
+  const shareUrl = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(appUrl) + '&quote=' + encodeURIComponent(msg);
+  window.open(shareUrl, '_blank', 'width=600,height=500');
 }
 
 function dismissWinner(){
