@@ -116,25 +116,26 @@
     .meal-card.yes .card-undo,.meal-card.no .card-undo{display:block}
     .day-counter{font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;text-align:center}
     .day-dots-hint{font-size:11px;color:#444;text-align:center;margin-top:-14px;margin-bottom:16px}
-    .day-dots{display:flex;gap:6px;justify-content:center;margin-bottom:20px}
+    .day-dots{display:flex;gap:4px;justify-content:center;margin-bottom:20px}
     .day-dot{
-      width:40px;height:40px;border-radius:50%;border:2px solid #2a2a2a;
-      background:#161616;color:#444;cursor:pointer;
+      width:36px;height:36px;border-radius:50%;border:2px solid #2a2a2a;
+      background:#161616;color:#555;cursor:pointer;
       display:flex;align-items:center;justify-content:center;
-      font-family:'Bebas Neue',sans-serif;font-size:15px;
+      font-family:'Bebas Neue',sans-serif;font-size:14px;
       transition:all .2s;flex-shrink:0;
       touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,107,53,.2);
       user-select:none;
     }
     .day-dot.done{border-color:#2a2a2a;color:var(--accent);background:#161616}
-    .day-dot.active{border:2px solid #fff;background:#fff;color:#111;transform:scale(1.2);opacity:1!important;box-shadow:0 0 0 3px var(--accent)}
-    .day-dot.active.done{background:var(--accent);color:#fff;border:2px solid #fff;transform:scale(1.2);opacity:1!important;box-shadow:0 0 0 3px var(--accent),0 0 18px rgba(255,107,53,.7)}
+    .day-dot.active{border:2px solid #fff;background:#fff;color:#111;transform:scale(1.15);opacity:1!important;box-shadow:0 0 0 3px var(--accent)}
+    .day-dot.active.done{background:var(--accent);color:#fff;border:2px solid #fff;transform:scale(1.15);opacity:1!important;box-shadow:0 0 0 3px var(--accent),0 0 16px rgba(255,107,53,.7)}
     .day-dot.future{opacity:.35}
     .btn-yes{
       display:block;width:100%;padding:15px;
       background:var(--accent);color:#fff;
       font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.06em;
       text-align:center;border:none;border-radius:50px;cursor:pointer;
+      white-space:nowrap;
       box-shadow:0 4px 18px rgba(255,107,53,.28);
     }
     .btn-yes.pressed{animation:yes-press .2s ease}
@@ -691,7 +692,7 @@ function renderToday(){
     card.innerHTML =
       '<div class="card-header"><div class="card-name">' + LABELS[m] + '</div><div class="card-icon">' + icon + '</div></div>' +
       '<div class="card-q">Did you hit your palm of protein?</div>' +
-      (ans===null ? '<div class="card-btns"><button class="btn-yes" onclick="handleMeal(\'' + m + '\',true,event)">YES \u2014 I GOT IT</button><button class="btn-no" onclick="handleMeal(\'' + m + '\',false,event)">No, I missed it</button></div>' : '') +
+      (ans===null ? '<div class="card-btns"><button class="btn-yes" onclick="handleMeal(\'' + m + '\',true,event)">YES, I GOT IT</button><button class="btn-no" onclick="handleMeal(\'' + m + '\',false,event)">No, I missed it</button></div>' : '') +
       '<div class="card-status">' + status + '</div>' +
       '<div class="card-undo" onclick="resetMeal(\'' + m + '\')">tap to change</div>';
     container.appendChild(card);
@@ -742,7 +743,7 @@ function resetMeal(meal){
       card.innerHTML =
         '<div class="card-header"><div class="card-name">'+LABELS[meal]+'</div><div class="card-icon"></div></div>' +
         '<div class="card-q">Did you hit your palm of protein?</div>' +
-        '<div class="card-btns"><button class="btn-yes" onclick="handleMeal(\''+meal+'\',true,event)">YES \u2014 I GOT IT</button><button class="btn-no" onclick="handleMeal(\''+meal+'\',false,event)">No, I missed it</button></div>' +
+        '<div class="card-btns"><button class="btn-yes" onclick="handleMeal(\''+meal+'\',true,event)">YES, I GOT IT</button><button class="btn-no" onclick="handleMeal(\''+meal+'\',false,event)">No, I missed it</button></div>' +
         '<div class="card-status"></div><div class="card-undo" onclick="resetMeal(\''+meal+'\')">tap to change</div>';
     }
   }
