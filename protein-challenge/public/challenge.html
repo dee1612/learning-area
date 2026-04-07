@@ -19,18 +19,18 @@
       --card-bg:#1A1A1A;--card-border:#2A2A2A;
     }
     html,body{height:100%;background:#060606;color:var(--text-primary);font-family:'DM Sans',-apple-system,sans-serif;overflow:hidden;position:fixed;width:100%}
-    #app{position:fixed;inset:0;overflow:hidden;max-width:480px;left:50%;transform:translateX(-50%);background:var(--bg)}
+    #app{position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;overflow:hidden;background:var(--bg)}
 
     /* SCREENS */
     .screen{
       position:absolute;inset:0;bottom:72px;
       overflow-y:auto;-webkit-overflow-scrolling:touch;
-      padding:0 24px 32px;
+      padding:0 16px 32px;
       transform:translateX(100%);opacity:0;
     }
     .screen.active{transform:translateX(0);opacity:1}
     #screen-onboarding{
-      bottom:0;padding:48px 32px 40px;
+      bottom:0;padding:48px 20px 40px;
       display:flex;flex-direction:column;justify-content:flex-start;
       overflow-y:auto;-webkit-overflow-scrolling:touch;
     }
@@ -129,7 +129,7 @@
     .day-dot.done{border-color:#2a2a2a;color:var(--accent);background:#161616}
     .day-dot.active{border:2px solid #fff;background:#fff;color:#111;opacity:1!important;box-shadow:0 0 0 3px var(--accent)}
     .day-dot.active.done{background:var(--accent);color:#fff;border:2px solid #fff;opacity:1!important;box-shadow:0 0 0 3px var(--accent),0 0 16px rgba(255,107,53,.7)}
-    .day-dot.future{opacity:.35}
+    .day-dot.future{opacity:.5}
     .btn-yes{
       display:block;width:100%;padding:15px;
       background:var(--accent);color:#fff;
