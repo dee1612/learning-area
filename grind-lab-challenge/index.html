@@ -116,19 +116,19 @@
     .meal-card.yes .card-undo,.meal-card.no .card-undo{display:block}
     .day-counter{font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;text-align:center}
     .day-dots-hint{font-size:11px;color:#444;text-align:center;margin-top:-14px;margin-bottom:16px}
-    .day-dots{display:flex;gap:4px;justify-content:center;margin-bottom:20px}
+    .day-dots{display:flex;justify-content:space-between;margin-bottom:20px}
     .day-dot{
-      width:36px;height:36px;border-radius:50%;border:2px solid #2a2a2a;
+      width:38px;height:38px;border-radius:50%;border:2px solid #2a2a2a;
       background:#161616;color:#555;cursor:pointer;
       display:flex;align-items:center;justify-content:center;
       font-family:'Bebas Neue',sans-serif;font-size:14px;
-      transition:all .2s;flex-shrink:0;
+      transition:background .2s,border-color .2s,color .2s,box-shadow .2s;flex-shrink:0;
       touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,107,53,.2);
       user-select:none;
     }
     .day-dot.done{border-color:#2a2a2a;color:var(--accent);background:#161616}
-    .day-dot.active{border:2px solid #fff;background:#fff;color:#111;transform:scale(1.15);opacity:1!important;box-shadow:0 0 0 3px var(--accent)}
-    .day-dot.active.done{background:var(--accent);color:#fff;border:2px solid #fff;transform:scale(1.15);opacity:1!important;box-shadow:0 0 0 3px var(--accent),0 0 16px rgba(255,107,53,.7)}
+    .day-dot.active{border:2px solid #fff;background:#fff;color:#111;opacity:1!important;box-shadow:0 0 0 3px var(--accent)}
+    .day-dot.active.done{background:var(--accent);color:#fff;border:2px solid #fff;opacity:1!important;box-shadow:0 0 0 3px var(--accent),0 0 16px rgba(255,107,53,.7)}
     .day-dot.future{opacity:.35}
     .btn-yes{
       display:block;width:100%;padding:15px;
